@@ -1,10 +1,8 @@
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import './services/firestore';
 import Option from './models/Option';
 
 dotenv.config();
-
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/bingo';
 
 const sampleOptions = [
   'Dead faced lead',
@@ -37,12 +35,10 @@ const sampleOptions = [
 
 async function seed() {
   try {
-    console.log('Connecting to MongoDB...');
-    await mongoose.connect(MONGODB_URI);
-    console.log('Connected to MongoDB');
+    console.log('Initializing Firestore (using credentials from env)...');
 
     // Clear existing options
-    await Option.deleteMany({});
+    await Option.deleteMany();
     console.log('Cleared existing options');
 
     // Insert sample options

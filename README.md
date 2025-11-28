@@ -15,7 +15,7 @@ A full-stack bingo game built with Node.js, TypeScript, React, SCSS, and MongoDB
 ### Backend
 - Node.js + Express
 - TypeScript
-- MongoDB + Mongoose
+- Firestore (Firebase) — replaces MongoDB/Mongoose
 - CORS enabled
 
 ### Frontend
@@ -28,7 +28,7 @@ A full-stack bingo game built with Node.js, TypeScript, React, SCSS, and MongoDB
 ## Prerequisites
 
 - Node.js (v18 or higher)
-- MongoDB (local or remote instance)
+- A Firebase project with Firestore enabled and a service account JSON
 - npm or yarn
 
 ## Installation
@@ -59,31 +59,28 @@ A full-stack bingo game built with Node.js, TypeScript, React, SCSS, and MongoDB
    ```
 
 5. **Configure environment variables**
-   
-   The server/.env file is already created with default values:
+
+   The server now uses Firestore instead of MongoDB. You must provide Firebase credentials to the server in one of two ways:
+
+   Option A (recommended): set `GOOGLE_APPLICATION_CREDENTIALS` to the path of your service account JSON file.
+
+   Option B: set `FIREBASE_SERVICE_ACCOUNT` to the base64-encoded contents of your service account JSON (useful for CI).
+
+   Example `server/.env` (you can copy `server/.env.example`):
    ```
    PORT=5174
-   MONGODB_URI=mongodb://localhost:27017/bingo
    NODE_ENV=development
+   # Option A (use one of these):
+   # GOOGLE_APPLICATION_CREDENTIALS=/path/to/serviceAccount.json
+   # Option B (alternative):
+   # FIREBASE_SERVICE_ACCOUNT=<base64-encoded-service-account-json>
    ```
-   
-   Update `MONGODB_URI` if you're using a different MongoDB instance.
 
 ## Running the Application
 
-### Start MongoDB
+### Firestore credentials
 
-Make sure MongoDB is running on your system:
-```bash
-# macOS (using Homebrew)
-brew services start mongodb-community
-
-# Linux
-sudo systemctl start mongod
-
-# Or run manually
-mongod
-```
+Before starting the server ensure Firestore credentials are available via `GOOGLE_APPLICATION_CREDENTIALS` or `FIREBASE_SERVICE_ACCOUNT` (see `server/.env.example`).
 
 ### Option 1: Run both server and client together
 
@@ -123,11 +120,11 @@ npm run dev:client
 bingo/
 ├── server/               # Backend API
 │   ├── src/
-│   │   ├── models/      # MongoDB models
+│   │   ├── models/      # Firestore-backed data access
 │   │   ├── routes/      # Express routes
 │   │   └── index.ts     # Server entry point
-│   ├── .env             # Environment variables
-│   └── package.json
+│   ├── .env.example     # Environment variable examples for Firestore
+   │   └── package.json
 ├── client/              # Frontend React app
 │   ├── src/
 │   │   ├── components/  # React components

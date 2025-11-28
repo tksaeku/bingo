@@ -21,14 +21,17 @@ router.post('/', async (req: Request, res: Response) => {
     if (!text || text.trim() === '') {
       return res.status(400).json({ error: 'Option text is required' });
     }
+    const trimmed = text.trim();
+    const existing = await Option.findOne({ text: trimmed });
+    if (existing) {
+      return res.status(400).json({ error: 'Option already exists' });
+    }
 
-    const option = new Option({ text: text.trim() });
+    const option = new Option({ text: trimmed });
     await option.save();
     res.status(201).json(option);
   } catch (error: any) {
-    if (error.code === 11000) {
-      return res.status(400).json({ error: 'Option already exists' });
-    }
+    console.error('Create option error:', error);
     res.status(500).json({ error: 'Failed to create option' });
   }
 });
