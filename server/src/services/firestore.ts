@@ -1,22 +1,31 @@
-import admin from 'firebase-admin';
+import admin, { credential } from 'firebase-admin';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
-
-// Initialize firebase-admin. Prefer GOOGLE_APPLICATION_CREDENTIALS or FIREBASE_SERVICE_ACCOUNT (base64 JSON).
-if (!admin.apps.length) {
-  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    try {
-      const serviceAccount = JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString());
-      admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-    } catch (err) {
-      console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT:', err);
-      throw err;
-    }
+try {
+  // 1) If GOOGLE_APPLICATION_CREDENTIALS is set, initialize with default (firebase-admin will pick it up)
+  let credentialsJSON = null;
+  const candidatePath = path.resolve(__dirname, '../../serviceAccountKey.json');
+  if (fs.existsSync(candidatePath)) {
+    console.log('Initializing Firebase Admin SDK with serviceAccountKey.json file');
+    const raw = fs.readFileSync(candidatePath, 'utf8');
+    credentialsJSON = JSON.parse(raw);
+    admin.initializeApp({
+      credential: admin.credential.cert(credentialsJSON),
+      projectId: process.env.FIREBASE_PROJECT_ID || credentialsJSON.project_id,
+    });
   } else {
-    // Will use application default credentials if available (GOOGLE_APPLICATION_CREDENTIALS)
-    admin.initializeApp();
+    console.log('Initializing Firebase Admin SDK with application default credentials');
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+      projectId: process.env.FIREBASE_PROJECT_ID,
+    });
   }
+} catch (err) {
+  console.error('Failed to initialize Firebase Admin SDK:', err);
+  throw err;
 }
 
 export const db = admin.firestore();
