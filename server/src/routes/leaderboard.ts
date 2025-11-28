@@ -6,7 +6,7 @@ const router = express.Router();
 // Get leaderboard
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const leaderboard = await Leaderboard.find().sort({ lastWin: -1 }).limit(20);
+    const leaderboard = await Leaderboard.find().sort({ lastWin: -1 }).limit(50);
     res.json(leaderboard);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch leaderboard' });

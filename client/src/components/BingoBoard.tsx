@@ -17,11 +17,21 @@ const BingoBoard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showWinModal, setShowWinModal] = useState(false);
-
+  const executeSetBoard = (newBoard: Cell[]) => {
+    localStorage.setItem('bingoBoard', JSON.stringify(newBoard));
+    setBoard(newBoard);
+  };
   const generateBoard = async () => {
     try {
       setLoading(true);
       setError(null);
+      const localBingoBoard = localStorage.getItem('bingoBoard');
+      if (localBingoBoard) {
+        const savedBoard = JSON.parse(localBingoBoard || '[]') as Cell[];
+        setBoard(savedBoard);
+        setLoading(false);
+        return;
+      }
       const response = await optionsAPI.getAll();
       const options = response.data;
 
@@ -43,21 +53,25 @@ const BingoBoard = () => {
         if (i === CENTER_INDEX) {
           newBoard.push({ text: 'FREE', marked: true, isFree: true });
         } else {
-          newBoard.push({ 
-            text: selected[optionIndex].text, 
-            marked: false, 
-            isFree: false 
+          newBoard.push({
+            text: selected[optionIndex].text,
+            marked: false,
+            isFree: false,
           });
           optionIndex++;
         }
       }
-
-      setBoard(newBoard);
+      executeSetBoard(newBoard);
       setLoading(false);
     } catch (err) {
       setError('Failed to load bingo board');
       setLoading(false);
     }
+  };
+
+  const resetBoard = async () => {
+    localStorage.removeItem('bingoBoard');
+    await generateBoard();
   };
 
   useEffect(() => {
@@ -117,7 +131,7 @@ const BingoBoard = () => {
 
     const updatedBoard = [...board];
     updatedBoard[index].marked = true;
-    setBoard(updatedBoard);
+    executeSetBoard(updatedBoard);
 
     if (checkWin(updatedBoard)) {
       setTimeout(() => setShowWinModal(true), 500);
@@ -163,14 +177,11 @@ const BingoBoard = () => {
           </div>
         ))}
       </div>
-      <button onClick={generateBoard} className="btn btn-secondary reset-btn">
+      <button onClick={resetBoard} className="btn btn-secondary reset-btn">
         Reset Board
       </button>
       {showWinModal && (
-        <WinModal
-          onClose={() => setShowWinModal(false)}
-          onPlayAgain={handlePlayAgain}
-        />
+        <WinModal onClose={() => setShowWinModal(false)} onPlayAgain={handlePlayAgain} />
       )}
     </div>
   );
