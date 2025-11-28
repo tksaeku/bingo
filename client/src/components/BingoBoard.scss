@@ -1,0 +1,118 @@
+.bingo-board-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  
+  .board-title {
+    color: white;
+    font-size: 2.5rem;
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.bingo-board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  background-color: white;
+  padding: 1rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-width: 600px;
+  width: 100%;
+  
+  &.loading,
+  &.error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    gap: 1rem;
+  }
+}
+
+.bingo-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  padding: 0.5rem;
+  min-height: 80px;
+  
+  &:hover:not(.marked):not(.free) {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  &.marked {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    cursor: default;
+    animation: markCell 0.3s ease-out;
+    
+    .cell-text {
+      color: white;
+    }
+  }
+  
+  &.free {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    cursor: default;
+    
+    .cell-text {
+      color: white;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+  }
+  
+  .cell-text {
+    text-align: center;
+    font-weight: 500;
+    color: #333;
+    word-break: break-word;
+    font-size: 0.875rem;
+    line-height: 1.2;
+  }
+}
+
+@keyframes markCell {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.reset-btn {
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .bingo-board {
+    gap: 0.25rem;
+    padding: 0.5rem;
+  }
+  
+  .bingo-cell {
+    min-height: 60px;
+    
+    .cell-text {
+      font-size: 0.75rem;
+    }
+  }
+  
+  .board-title {
+    font-size: 2rem;
+  }
+}

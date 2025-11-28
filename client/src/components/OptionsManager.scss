@@ -1,0 +1,106 @@
+.options-manager {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  
+  h1 {
+    color: #333;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  
+  h2 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+  }
+  
+  &.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    color: #667eea;
+  }
+}
+
+.add-option-form {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  
+  .option-input {
+    flex: 1;
+    padding: 1rem;
+    font-size: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    transition: border-color 0.3s;
+    
+    &:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+  }
+}
+
+.options-list {
+  margin-top: 2rem;
+  
+  ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .option-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+    
+    &:hover {
+      background-color: #e9ecef;
+    }
+    
+    .option-text {
+      flex: 1;
+      color: #333;
+      font-size: 1rem;
+    }
+  }
+  
+  .empty-message {
+    text-align: center;
+    color: #6c757d;
+    padding: 2rem;
+    font-style: italic;
+  }
+}
+
+@media (max-width: 768px) {
+  .options-manager {
+    padding: 1.5rem;
+  }
+  
+  .add-option-form {
+    flex-direction: column;
+  }
+  
+  .option-item {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+    
+    .option-text {
+      margin-bottom: 0.5rem;
+    }
+  }
+}

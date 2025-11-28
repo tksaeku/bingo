@@ -1,0 +1,127 @@
+.leaderboard {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  
+  h1 {
+    color: #333;
+    margin-bottom: 2rem;
+    text-align: center;
+    font-size: 2.5rem;
+  }
+  
+  &.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    color: #667eea;
+  }
+  
+  .empty-message {
+    text-align: center;
+    color: #6c757d;
+    padding: 3rem;
+    font-size: 1.2rem;
+    font-style: italic;
+  }
+}
+
+.leaderboard-table {
+  margin-bottom: 2rem;
+  
+  .table-header,
+  .table-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 100px;
+    gap: 1rem;
+    padding: 1rem;
+    align-items: center;
+  }
+  
+  .table-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: bold;
+    border-radius: 8px 8px 0 0;
+    font-size: 1.1rem;
+  }
+  
+  .table-row {
+    border-bottom: 1px solid #e0e0e0;
+    transition: background-color 0.3s;
+    
+    &:hover {
+      background-color: #f8f9fa;
+    }
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    &.top-three {
+      background: linear-gradient(90deg, #fff9e6 0%, #ffffff 100%);
+      font-weight: 600;
+      
+      &:hover {
+        background: linear-gradient(90deg, #fff5d6 0%, #f8f9fa 100%);
+      }
+    }
+  }
+  
+  .rank-col {
+    text-align: center;
+    font-size: 1.5rem;
+  }
+  
+  .name-col {
+    font-size: 1.1rem;
+    color: #333;
+  }
+  
+  .wins-col {
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #667eea;
+  }
+}
+
+.refresh-btn {
+  display: block;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .leaderboard {
+    padding: 1.5rem;
+    
+    h1 {
+      font-size: 2rem;
+    }
+  }
+  
+  .leaderboard-table {
+    .table-header,
+    .table-row {
+      grid-template-columns: 60px 1fr 80px;
+      gap: 0.5rem;
+      padding: 0.75rem;
+    }
+    
+    .rank-col {
+      font-size: 1.2rem;
+    }
+    
+    .name-col {
+      font-size: 1rem;
+    }
+    
+    .wins-col {
+      font-size: 1rem;
+    }
+  }
+}
