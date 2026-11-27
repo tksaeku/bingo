@@ -4,6 +4,7 @@ import { TOTAL_CELLS } from '../../constants';
 import { useBingoBoard } from '../../hooks/useBingoBoard';
 import { leaderboardApi } from '../../services/api';
 import { Button } from '../../styles/Button';
+import { Eyebrow, HeroLead, HeroTitle, HeroTitleAccent, Page } from '../../styles/PageHero';
 import WinModal from '../WinModal/WinModal';
 import {
   BoardActions,
@@ -11,6 +12,7 @@ import {
   BoardExtras,
   BoardHint,
   BoardHeader,
+  BoardHero,
   BoardSection,
   BoardSubtitle,
   BoardTitle,
@@ -20,16 +22,10 @@ import {
   CellButton,
   CellText,
   ColumnLetters,
-  Eyebrow,
   FreeGlyph,
   Grid,
-  Hero,
   HeroArt,
-  HeroLead,
   HeroOrb,
-  HeroTitle,
-  HeroTitleAccent,
-  Page,
   Progress,
   ProgressCaption,
   ProgressCount,
@@ -55,7 +51,7 @@ function formatCount(count: number): string {
 
 /** Page title, lead copy and decorative orb. */
 const BingoHero = (): ReactElement => (
-  <Hero>
+  <BoardHero>
     <Eyebrow>A little game for the big moments</Eyebrow>
     <HeroTitle>
       The Open <HeroTitleAccent>Bingo.</HeroTitleAccent>
@@ -69,7 +65,7 @@ const BingoHero = (): ReactElement => (
       <Sparkle $top="2%" $left="88%" />
       <Sparkle $top="80%" $left="84%" />
     </HeroArt>
-  </Hero>
+  </BoardHero>
 );
 BingoHero.displayName = 'BingoHero';
 
