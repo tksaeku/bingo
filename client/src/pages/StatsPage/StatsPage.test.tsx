@@ -17,6 +17,7 @@ describe('StatsPage', () => {
     vi.mocked(adminApi.verify).mockResolvedValue(undefined);
     vi.mocked(analyticsApi.getSummary).mockResolvedValue(createAnalyticsSummary());
     renderWithProviders(<StatsPage />);
+    expect(screen.getByText('Enter the admin key to view the usage stats.')).toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText('Admin key'), 'secret');
     await userEvent.click(screen.getByRole('button', { name: 'Unlock' }));

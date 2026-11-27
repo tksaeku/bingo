@@ -10,10 +10,12 @@ interface AdminKeyFormProps {
   onVerify: (candidateKey: string) => Promise<boolean>;
   isVerifying: boolean;
   errorMessage: string | null;
+  /** One line under the title saying what the key unlocks on this page. */
+  description: string;
 }
 
 /** Prompts for the admin key. The parent stores the key only after the server accepts it. */
-const AdminKeyForm = ({ onVerify, isVerifying, errorMessage }: AdminKeyFormProps): ReactElement => {
+const AdminKeyForm = ({ onVerify, isVerifying, errorMessage, description }: AdminKeyFormProps): ReactElement => {
   const [candidateKey, setCandidateKey] = useState('');
   const inputId = useId();
 
@@ -30,7 +32,7 @@ const AdminKeyForm = ({ onVerify, isVerifying, errorMessage }: AdminKeyFormProps
       <CardHeader>
         <div>
           <CardTitle id="admin-key-title">Admin Access</CardTitle>
-          <CardSubtitle>Enter the admin key to manage the bingo cards.</CardSubtitle>
+          <CardSubtitle>{description}</CardSubtitle>
         </div>
       </CardHeader>
       <Form onSubmit={handleSubmit}>

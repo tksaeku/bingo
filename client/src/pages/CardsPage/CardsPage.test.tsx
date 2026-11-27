@@ -19,6 +19,7 @@ describe('CardsPage', () => {
       renderWithProviders(<CardsPage />);
 
       expect(screen.getByLabelText('Admin key')).toBeInTheDocument();
+      expect(screen.getByText('Enter the admin key to manage the bingo cards.')).toBeInTheDocument();
       expect(optionsApi.getAll).not.toHaveBeenCalled();
     });
 

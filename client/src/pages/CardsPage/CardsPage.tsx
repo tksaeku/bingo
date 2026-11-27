@@ -21,7 +21,12 @@ const CardsPage = (): ReactElement => {
         <HeroLead>Every square on every board is drawn from this deck. Add the moments worth spotting.</HeroLead>
       </Hero>
       {adminKey === null ? (
-        <AdminKeyForm onVerify={verifyAndStore} isVerifying={isVerifying} errorMessage={error} />
+        <AdminKeyForm
+          onVerify={verifyAndStore}
+          isVerifying={isVerifying}
+          errorMessage={error}
+          description="Enter the admin key to manage the bingo cards."
+        />
       ) : (
         <OptionsManager adminKey={adminKey} onUnauthorized={() => clearAdminKey(KEY_REJECTED_MESSAGE)} />
       )}

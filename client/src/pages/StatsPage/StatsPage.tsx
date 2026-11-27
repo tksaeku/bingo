@@ -21,7 +21,12 @@ const StatsPage = (): ReactElement => {
         <HeroLead>Anonymous usage numbers for the game: who plays, how far they get, and when.</HeroLead>
       </Hero>
       {adminKey === null ? (
-        <AdminKeyForm onVerify={verifyAndStore} isVerifying={isVerifying} errorMessage={error} />
+        <AdminKeyForm
+          onVerify={verifyAndStore}
+          isVerifying={isVerifying}
+          errorMessage={error}
+          description="Enter the admin key to view the usage stats."
+        />
       ) : (
         <StatsDashboard adminKey={adminKey} onUnauthorized={() => clearAdminKey(KEY_REJECTED_MESSAGE)} />
       )}
