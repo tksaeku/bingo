@@ -6,6 +6,7 @@ export const Panel = styled.section`
   margin: 0 auto;
   background: ${({ theme }) => theme.colors.surface};
   padding: 2rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radii.medium};
   box-shadow: ${({ theme }) => theme.shadows.card};
 
@@ -48,7 +49,10 @@ export const TextInput = styled.input`
   flex: 1;
   padding: 1rem;
   font-size: 1rem;
-  border: 2px solid ${({ theme }) => theme.colors.border};
+  font-family: inherit;
+  color: ${({ theme }) => theme.colors.text};
+  background-color: ${({ theme }) => theme.colors.surfaceInset};
+  border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radii.small};
   transition: border-color 0.3s;
 

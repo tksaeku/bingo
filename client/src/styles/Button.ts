@@ -11,8 +11,11 @@ export const Button = styled.button<ButtonProps>`
   padding: ${({ $size }) => ($size === 'small' ? '0.5rem 1rem' : '0.75rem 1.5rem')};
   border: none;
   border-radius: ${({ theme }) => theme.radii.small};
-  font-size: ${({ $size }) => ($size === 'small' ? '0.875rem' : '1rem')};
-  font-weight: 600;
+  font-family: inherit;
+  font-size: ${({ $size }) => ($size === 'small' ? '0.75rem' : '0.8125rem')};
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   cursor: pointer;
   color: white;
   transition: all 0.3s;

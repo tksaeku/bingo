@@ -79,7 +79,7 @@ describe('BingoBoard', () => {
   });
 
   describe('marking cells', () => {
-    it('marks a cell, persists it, and never unmarks it', async () => {
+    it('marks a cell, persists it, and unmarks it on a second click', async () => {
       localStorage.setItem('bingoBoard', createSavedBoardJson());
       const savedBefore = localStorage.getItem('bingoBoard');
       renderWithProviders(<BingoBoard />);
@@ -91,7 +91,27 @@ describe('BingoBoard', () => {
       expect(localStorage.getItem('bingoBoard')).not.toBe(savedBefore);
 
       await userEvent.click(cell);
-      expect(cell).toHaveAttribute('aria-pressed', 'true');
+      expect(cell).toHaveAttribute('aria-pressed', 'false');
+      expect(getSavedBoard().cells[7].isMarked).toBe(false);
+    });
+
+    it('never unmarks the free cell', async () => {
+      localStorage.setItem('bingoBoard', createSavedBoardJson());
+      renderWithProviders(<BingoBoard />);
+
+      const freeCell = await screen.findByRole('button', { name: 'FREE' });
+      await userEvent.click(freeCell);
+      expect(freeCell).toHaveAttribute('aria-pressed', 'true');
+      expect(getSavedBoard().cells[12].isMarked).toBe(true);
+    });
+
+    it('counts marked cells, including the free cell', async () => {
+      localStorage.setItem('bingoBoard', createSavedBoardJson([0]));
+      renderWithProviders(<BingoBoard />);
+
+      expect(await screen.findByRole('progressbar')).toHaveAttribute('aria-valuenow', '2');
+      await userEvent.click(screen.getByRole('button', { name: 'Cell 0' }));
+      expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1');
     });
 
     it('marks with the keyboard', async () => {
@@ -140,6 +160,36 @@ describe('BingoBoard', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: 'Cell 20' }));
+      await advancePastWinDelay();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('does not reopen the modal when a line is unmarked and completed again', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      localStorage.setItem('bingoBoard', createSavedBoardJson(ALMOST_WON_ROW));
+      renderWithProviders(<BingoBoard />);
+
+      const winningCell = await screen.findByRole('button', { name: 'Cell 4' });
+      await userEvent.click(winningCell);
+      await advancePastWinDelay();
+      await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+      await userEvent.click(winningCell);
+      expect(screen.queryByRole('button', { name: 'Submit score' })).not.toBeInTheDocument();
+      await userEvent.click(winningCell);
+      await advancePastWinDelay();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Submit score' })).toBeInTheDocument();
+    });
+
+    it('cancels the pending modal when the winning mark is undone', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      localStorage.setItem('bingoBoard', createSavedBoardJson(ALMOST_WON_ROW));
+      renderWithProviders(<BingoBoard />);
+
+      const winningCell = await screen.findByRole('button', { name: 'Cell 4' });
+      await userEvent.click(winningCell);
+      await userEvent.click(winningCell);
       await advancePastWinDelay();
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
@@ -213,7 +263,7 @@ describe('BingoBoard', () => {
       expect(getSavedBoard().cells.every((cell) => !cell.text.startsWith('Cell'))).toBe(true);
       expect(getSavedBoard().isScoreSubmitted).toBe(false);
       expect(leaderboardApi.submitWin).toHaveBeenCalledWith('Bob');
-      expect(screen.getByRole('heading', { name: 'Bingo Board' })).toHaveFocus();
+      expect(screen.getByRole('heading', { name: 'Your Bingo Board' })).toHaveFocus();
     });
   });
 
@@ -225,7 +275,7 @@ describe('BingoBoard', () => {
 
       await userEvent.click(await screen.findByRole('button', { name: 'New Board' }));
       expect(await screen.findAllByRole('button', { name: /Option \d+/ })).toHaveLength(24);
-      expect(screen.getByRole('heading', { name: 'Bingo Board' })).toHaveFocus();
+      expect(screen.getByRole('heading', { name: 'Your Bingo Board' })).toHaveFocus();
     });
   });
 });

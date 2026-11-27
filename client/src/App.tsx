@@ -5,11 +5,26 @@ import BingoBoard from './components/BingoBoard/BingoBoard';
 import Leaderboard from './components/Leaderboard/Leaderboard';
 import { useAdminKey } from './hooks/useAdminKey';
 import OptionsPage from './pages/OptionsPage/OptionsPage';
-import { Brand, Main, NavContent, NavItem, NavLinks, Navbar, Shell } from './App.styles';
+import { THE_OPEN_WEBSITE_URL } from './constants';
+import {
+  Brand,
+  BrandTagline,
+  ExternalLink,
+  Footer,
+  FooterLink,
+  Header,
+  HeaderContent,
+  Main,
+  NavItem,
+  NavLinks,
+  Shell,
+  Wordmark,
+  WordmarkGlyph,
+} from './App.styles';
 import { GlobalStyle } from './styles/GlobalStyle';
 import { theme } from './theme';
 
-/** App shell: navigation (admin link only with a verified key) and routes. Needs a Router ancestor. */
+/** App shell: header navigation, footer (admin link only with a verified key) and routes. Needs a Router ancestor. */
 const App = (): ReactElement => {
   const { adminKey } = useAdminKey();
 
@@ -17,18 +32,31 @@ const App = (): ReactElement => {
     <ThemeProvider theme={theme}>
       <GlobalStyle />
       <Shell>
-        <Navbar aria-label="Main">
-          <NavContent>
-            <Brand to="/">US Open Bingo Game</Brand>
-            <NavLinks>
+        <Header>
+          <HeaderContent>
+            <Brand to="/" aria-label="The Open Bingo home">
+              <Wordmark>
+                <WordmarkGlyph aria-hidden="true">✦</WordmarkGlyph>
+                The Open
+              </Wordmark>
+              <BrandTagline>
+                World Swing Dance
+                <br />
+                Championships
+              </BrandTagline>
+            </Brand>
+            <NavLinks aria-label="Main">
+              <ExternalLink href={THE_OPEN_WEBSITE_URL} target="_blank" rel="noopener noreferrer">
+                Visit The Open website
+              </ExternalLink>
               <NavItem to="/" end>
                 Play
               </NavItem>
               {adminKey !== null && <NavItem to="/options">Manage Options</NavItem>}
               <NavItem to="/leaderboard">Leaderboard</NavItem>
             </NavLinks>
-          </NavContent>
-        </Navbar>
+          </HeaderContent>
+        </Header>
 
         <Main>
           <Routes>
@@ -38,6 +66,13 @@ const App = (): ReactElement => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Main>
+
+        <Footer>
+          <span>The Open · World Swing Dance Championships · Made for the moments we share</span>
+          <FooterLink href={THE_OPEN_WEBSITE_URL} target="_blank" rel="noopener noreferrer">
+            Visit The Open website
+          </FooterLink>
+        </Footer>
       </Shell>
     </ThemeProvider>
   );

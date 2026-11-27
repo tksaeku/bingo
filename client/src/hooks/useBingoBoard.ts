@@ -21,7 +21,8 @@ interface UseBingoBoardResult {
   isWinModalOpen: boolean;
   /** True on a won board whose score has not been submitted and whose modal is closed. */
   canSubmitScore: boolean;
-  markCell: (cellIndex: number) => void;
+  /** Marks an unmarked cell or unmarks a marked one; the free cell never changes. */
+  toggleCell: (cellIndex: number) => void;
   startNewBoard: () => void;
   closeWinModal: () => void;
   openWinModal: () => void;
@@ -30,7 +31,7 @@ interface UseBingoBoardResult {
 
 /**
  * Owns the bingo board lifecycle: restores a valid saved board, otherwise generates a new one
- * from the option pool, persists every change, and opens the win modal once per board.
+ * from the option pool, persists every change, and auto-opens the win modal only the first time a board is won.
  */
 export function useBingoBoard(): UseBingoBoardResult {
   const [initialSavedBoard] = useState(loadSavedBoard);
@@ -39,6 +40,7 @@ export function useBingoBoard(): UseBingoBoardResult {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isWinPending, setIsWinPending] = useState(false);
   const [isWinModalOpen, setIsWinModalOpen] = useState(false);
+  const [hasAutoOpenedWinModal, setHasAutoOpenedWinModal] = useState(false);
   const isGenerating = board === null && errorMessage === null;
 
   useEffect(() => {
@@ -84,22 +86,28 @@ export function useBingoBoard(): UseBingoBoardResult {
     return () => clearTimeout(timerId);
   }, [isWinPending]);
 
-  const markCell = useCallback(
+  const toggleCell = useCallback(
     (cellIndex: number): void => {
       const cell = board?.[cellIndex];
-      if (board === null || cell === undefined || cell.isMarked) {
+      if (board === null || cell === undefined || cell.isFree) {
         return;
       }
       const nextBoard = board.map((existingCell, index) =>
-        index === cellIndex ? { ...existingCell, isMarked: true } : existingCell,
+        index === cellIndex ? { ...existingCell, isMarked: !existingCell.isMarked } : existingCell,
       );
       saveBoard(nextBoard, isScoreSubmitted);
       setBoard(nextBoard);
-      if (!getHasWon(board) && getHasWon(nextBoard)) {
+      const hasWonNow = getHasWon(nextBoard);
+      if (!hasWonNow) {
+        setIsWinPending(false);
+        return;
+      }
+      if (!getHasWon(board) && !hasAutoOpenedWinModal) {
+        setHasAutoOpenedWinModal(true);
         setIsWinPending(true);
       }
     },
-    [board, isScoreSubmitted],
+    [board, isScoreSubmitted, hasAutoOpenedWinModal],
   );
 
   const startNewBoard = useCallback((): void => {
@@ -108,6 +116,7 @@ export function useBingoBoard(): UseBingoBoardResult {
     setErrorMessage(null);
     setIsWinPending(false);
     setIsWinModalOpen(false);
+    setHasAutoOpenedWinModal(false);
   }, []);
 
   const openWinModal = useCallback((): void => {
@@ -134,7 +143,7 @@ export function useBingoBoard(): UseBingoBoardResult {
     errorMessage,
     isWinModalOpen,
     canSubmitScore,
-    markCell,
+    toggleCell,
     startNewBoard,
     closeWinModal,
     openWinModal,
