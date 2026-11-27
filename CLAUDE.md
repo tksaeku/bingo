@@ -56,7 +56,7 @@ Thin client — all rules that matter (validation, dedupe, win counting, auth) a
 
 ## Deployment
 
-- Firebase App Hosting backend `bingo` (dedicated Firebase project `bingo-e1be7`, region us-east4) builds from the GitHub repo on push to `main`, using `apphosting.yaml`: `npm run build` (server + client) then `npm start`. The Express server serves both `/api/*` and the client, so one rollout ships both and the client calls the API same-origin (`/api`).
+- Firebase App Hosting backend `bingo` (dedicated Firebase project `bingo-e1be7`, region us-east4) builds from the GitHub repo on push to `main`, running the root `npm run build` (server + client) then `npm start` (App Hosting's defaults; `apphosting.yaml` sets only run config and env). The Express server serves both `/api/*` and the client, so one rollout ships both and the client calls the API same-origin (`/api`).
 - Public URL: `https://bingo.wemove.dance` (custom domain on the App Hosting backend; DNS at DreamHost). The backend's own `*.hosted.app` URL is listed by `firebase apphosting:backends:list`.
 - `ADMIN_KEY` comes from the Secret Manager secret `bingo-admin-key`.
 - Firestore: `(default)` database in us-east4. `firestore.rules` denies all client access (only the Admin SDK on the server touches Firestore); deploy rules with `firebase deploy --only firestore:rules`. `firebase.json` also configures the Firestore emulator.

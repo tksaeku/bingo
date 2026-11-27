@@ -1,9 +1,6 @@
 # Firebase App Hosting config for the `bingo` backend.
-# One build serves both the API (/api/*) and the client (everything else), so a rollout ships them together.
-scripts:
-  buildCommand: npm run build
-  runCommand: npm start
-
+# App Hosting runs the root `npm run build` (server + client) and `npm start`, so one rollout ships both:
+# the Express server serves /api/* and the client build.
 runConfig:
   minInstances: 0
   maxInstances: 2
