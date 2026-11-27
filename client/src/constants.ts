@@ -36,3 +36,6 @@ export const ADMIN_KEY_HEADER = 'x-admin-key';
 
 /** Number of confetti pieces rendered in the win modal. */
 export const CONFETTI_PIECE_COUNT = 50;
+
+/** The Open World Swing Dance Championships public website. */
+export const THE_OPEN_WEBSITE_URL = 'https://theopenswing.com';

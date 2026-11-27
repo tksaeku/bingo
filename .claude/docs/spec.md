@@ -5,10 +5,10 @@
 - **AC-G1** A board is 5×5 (25 cells). The center cell (index 12) is a pre-marked "FREE" cell.
 - **AC-G2** The other 24 cells are distinct options drawn uniformly at random (Fisher–Yates) from the option pool.
 - **AC-G3** If the pool has fewer than 24 options the board is not generated and the player sees a clear "not enough options" message.
-- **AC-G4** Clicking (or pressing Enter/Space on) an unmarked cell marks it. Marked cells cannot be unmarked by clicking.
+- **AC-G4** Clicking (or pressing Enter/Space on) an unmarked cell marks it; doing the same on a marked cell unmarks it. The free cell is always marked and cannot be toggled.
 - **AC-G5** A win is any fully marked row, column, or either diagonal (12 lines). The free cell counts as marked.
 - **AC-G6** The board persists in `localStorage` across reloads. A saved board that fails validation (not 25 cells, missing fields, unparsable) is discarded and a new board is generated — the player never gets stuck on an error.
-- **AC-G7** On the first winning mark, a win modal opens once. Further clicks on the same won board do not reopen it. A won board whose score has not been submitted (modal closed, or board restored after a reload) shows a "Submit score" button that reopens the modal; the flag is persisted with the saved board and the button disappears once the score is submitted.
+- **AC-G7** On the first winning mark, a win modal opens once. Further clicks on the same board — including unmarking and re-completing a line — do not reopen it automatically; unmarking during the open delay cancels it. A won board whose score has not been submitted (modal closed, or board restored after a reload) shows a "Submit score" button that reopens the modal; the flag is persisted with the saved board and the button disappears once the score is submitted.
 - **AC-G8** "New Board" clears the saved board and generates a fresh one.
 
 ## Win submission
