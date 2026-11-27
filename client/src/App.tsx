@@ -4,7 +4,7 @@ import { ThemeProvider } from 'styled-components';
 import BingoBoard from './components/BingoBoard/BingoBoard';
 import Leaderboard from './components/Leaderboard/Leaderboard';
 import { useAdminKey } from './hooks/useAdminKey';
-import OptionsPage from './pages/OptionsPage/OptionsPage';
+import CardsPage from './pages/CardsPage/CardsPage';
 import { THE_OPEN_WEBSITE_URL } from './constants';
 import {
   Brand,
@@ -52,7 +52,7 @@ const App = (): ReactElement => {
               <NavItem to="/" end>
                 Play
               </NavItem>
-              {adminKey !== null && <NavItem to="/options">Manage Options</NavItem>}
+              {adminKey !== null && <NavItem to="/cards">Manage Cards</NavItem>}
               <NavItem to="/leaderboard">Leaderboard</NavItem>
             </NavLinks>
           </HeaderContent>
@@ -61,7 +61,8 @@ const App = (): ReactElement => {
         <Main>
           <Routes>
             <Route path="/" element={<BingoBoard />} />
-            <Route path="/options" element={<OptionsPage />} />
+            <Route path="/cards" element={<CardsPage />} />
+            <Route path="/options" element={<Navigate to="/cards" replace />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

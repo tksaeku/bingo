@@ -26,8 +26,8 @@
 
 ## Option management (admin)
 
-- **AC-O1** Option writes require the admin key. The client never shows the "Manage Options" nav link unless a verified admin key is held in `sessionStorage`.
-- **AC-O2** Visiting `/options` without a key shows an admin-key form. The key is verified against the server before it is stored; a wrong key shows an error.
+- **AC-O1** Option writes require the admin key. The client never shows the "Manage Cards" nav link unless a verified admin key is held in `sessionStorage`.
+- **AC-O2** Visiting `/cards` (the admin page for the option pool, shown to players as "cards"; `/options` redirects there) without a key shows an admin-key form. The key is verified against the server before it is stored; a wrong key shows an error.
 - **AC-O3** Admins can add an option (1–100 characters after trimming) and delete an option. Duplicates (case-insensitive, trimmed) are rejected with a clear message.
 - **AC-O4** Adding/deleting does not blank the list or steal focus from the input; buttons are disabled while a request is in flight. Deletion asks for confirmation with an in-page control (no `window.confirm`/`alert`).
 - **AC-O5** A 401 from the server clears the stored key and returns to the key form.

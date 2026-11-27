@@ -1,4 +1,5 @@
 import styled, { keyframes } from 'styled-components';
+import { eyebrowText } from '../../styles/PageHero';
 
 /** Keyframes for the fade in. */
 const fadeIn = keyframes`
@@ -18,11 +19,13 @@ const confettiFall = keyframes`
   100% { top: 100%; transform: rotate(720deg); }
 `;
 
-/** Styled overlay. */
+/** Dimmed, blurred backdrop. */
 export const Overlay = styled.div`
   position: fixed;
   inset: 0;
+  padding: 1rem;
   background-color: ${({ theme }) => theme.colors.overlay};
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -30,73 +33,98 @@ export const Overlay = styled.div`
   animation: ${fadeIn} 0.3s ease-out;
 `;
 
-/** Styled dialog. */
+/** Dark dialog card with a soft purple glow. */
 export const Dialog = styled.div`
-  background: ${({ theme }) => theme.colors.surface};
-  padding: 3rem;
-  border-radius: ${({ theme }) => theme.radii.large};
-  box-shadow: ${({ theme }) => theme.shadows.modal};
-  max-width: 500px;
-  width: 90%;
   position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding: 2.75rem 2.25rem 2.25rem;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 0%, #2b2530 0%, ${({ theme }) => theme.colors.surface} 60%);
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radii.large};
+  box-shadow:
+    ${({ theme }) => theme.shadows.modal},
+    0 0 80px rgba(166, 91, 160, 0.18);
   animation: ${slideUp} 0.5s ease-out;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
-    padding: 2rem;
+    padding: 2.25rem 1.25rem 1.5rem;
   }
 `;
 
-/** Styled title. */
-export const Title = styled.h1`
+/** Tracked label above the title. */
+export const DialogEyebrow = styled.p`
+  ${eyebrowText}
+  position: relative;
+`;
+
+/** "Bingo!" heading. */
+export const Title = styled.h2`
+  position: relative;
+  margin-top: 0.75rem;
+  font-family: ${({ theme }) => theme.fonts.display};
+  font-weight: 700;
   font-size: 3rem;
-  text-align: center;
-  margin-bottom: 1rem;
-  background: ${({ theme }) => theme.gradients.primary};
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  line-height: 1.1;
+  color: white;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
-    font-size: 2rem;
+    font-size: 2.25rem;
   }
 `;
 
-/** Styled message. */
+/** Sparkle glyphs either side of the title. */
+export const TitleGlyph = styled.span`
+  display: inline-block;
+  margin: 0 0.75rem;
+  font-size: 1.25rem;
+  vertical-align: middle;
+  color: ${({ theme }) => theme.colors.primaryLight};
+`;
+
+/** Line under the title. */
 export const Message = styled.p`
-  text-align: center;
-  font-size: 1.5rem;
-  color: ${({ theme }) => theme.colors.text};
-  margin-bottom: 2rem;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
-    font-size: 1.2rem;
-  }
+  position: relative;
+  margin: 0.75rem 0 2rem;
+  font-size: 1rem;
+  font-weight: 300;
+  line-height: 1.6;
+  color: ${({ theme }) => theme.colors.mutedText};
 `;
 
-/** Styled form. */
+/** Name form; left-aligned fields inside the centered dialog. */
 export const Form = styled.form`
+  position: relative;
   display: flex;
   flex-direction: column;
+  text-align: left;
 `;
 
-/** Styled name input. */
-export const NameInput = styled.input`
-  padding: 1rem;
-  font-size: 1.1rem;
-  border: 2px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radii.small};
+/** Space under the name input. */
+export const NameField = styled.div`
   margin-bottom: 1rem;
-  transition: border-color 0.3s;
+`;
 
-  &:focus {
-    border-color: ${({ theme }) => theme.colors.primary};
+/** Live submission status line. */
+export const StatusText = styled.div`
+  font-size: 0.8125rem;
+  color: ${({ theme }) => theme.colors.mutedText};
+  margin-bottom: 0.5rem;
+
+  &:empty {
+    display: none;
   }
 `;
 
-/** Styled button group. */
+/** Side-by-side dialog actions; stacked on phones. */
 export const ButtonGroup = styled.div`
+  position: relative;
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 
   > button {
     flex: 1;
@@ -107,15 +135,21 @@ export const ButtonGroup = styled.div`
   }
 `;
 
-/** Styled confirmation. */
+/** Success message after the score is saved. */
 export const Confirmation = styled.p`
-  text-align: center;
-  font-size: 1.2rem;
-  color: ${({ theme }) => theme.colors.primary};
-  padding: 1rem 0 2rem;
+  position: relative;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  font-family: ${({ theme }) => theme.fonts.display};
+  font-size: 1.125rem;
+  color: white;
+  background-color: ${({ theme }) => theme.colors.surfaceInset};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-left: 2px solid ${({ theme }) => theme.colors.primary};
+  border-radius: ${({ theme }) => theme.radii.small};
 `;
 
-/** Styled confetti. */
+/** Clipped layer the confetti falls through. */
 export const Confetti = styled.div`
   position: absolute;
   inset: 0;
@@ -128,12 +162,12 @@ export const Confetti = styled.div`
   }
 `;
 
-/** Styled confetti piece. */
+/** One confetti piece. */
 export const ConfettiPiece = styled.div`
   position: absolute;
-  width: 10px;
-  height: 10px;
+  width: 7px;
+  height: 7px;
   top: -10px;
-  animation: ${confettiFall} 3s linear infinite;
-  opacity: 0.8;
+  animation: ${confettiFall} 3.5s linear infinite;
+  opacity: 0.85;
 `;

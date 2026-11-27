@@ -5,7 +5,7 @@ import { getIsValidPlayerName, normalizePlayerName } from '../../game/playerName
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { getErrorMessage } from '../../services/apiErrors';
 import { Button } from '../../styles/Button';
-import { ErrorMessage, FieldLabel } from '../../styles/Panel';
+import { ErrorMessage, FieldLabel, TextInput } from '../../styles/Form';
 import { createConfettiPieces } from './confetti';
 import {
   ButtonGroup,
@@ -13,11 +13,14 @@ import {
   ConfettiPiece,
   Confirmation,
   Dialog,
+  DialogEyebrow,
   Form,
   Message,
-  NameInput,
+  NameField,
   Overlay,
+  StatusText,
   Title,
+  TitleGlyph,
 } from './WinModal.styles';
 
 interface WinModalProps {
@@ -78,27 +81,35 @@ const WinModal = ({ onSubmit, onClose, onPlayAgain }: WinModalProps): ReactEleme
               style={{
                 left: `${piece.leftPercent}%`,
                 animationDelay: `${piece.delaySeconds}s`,
-                backgroundColor: `hsl(${piece.hue}, 70%, 60%)`,
+                backgroundColor: piece.color,
+                borderRadius: piece.isRound ? '50%' : '1px',
               }}
             />
           ))}
         </Confetti>
 
-        <Title id={titleId}>🎉 BINGO! 🎉</Title>
-        <Message>Congratulations! You won!</Message>
+        <DialogEyebrow>Five in a row</DialogEyebrow>
+        <Title id={titleId}>
+          <TitleGlyph aria-hidden="true">✦</TitleGlyph>
+          Bingo!
+          <TitleGlyph aria-hidden="true">✦</TitleGlyph>
+        </Title>
+        <Message>You called it. Add your name to the leaderboard.</Message>
 
         {submittedName === null ? (
           <Form onSubmit={handleSubmit}>
-            <FieldLabel htmlFor={inputId}>Your name</FieldLabel>
-            <NameInput
-              id={inputId}
-              type="text"
-              value={playerName}
-              onChange={(event) => setPlayerName(event.target.value)}
-              maxLength={PLAYER_NAME_MAX_LENGTH}
-              autoComplete="nickname"
-            />
-            <div aria-live="polite">{isSubmitting && 'Submitting your score...'}</div>
+            <NameField>
+              <FieldLabel htmlFor={inputId}>Your name</FieldLabel>
+              <TextInput
+                id={inputId}
+                type="text"
+                value={playerName}
+                onChange={(event) => setPlayerName(event.target.value)}
+                maxLength={PLAYER_NAME_MAX_LENGTH}
+                autoComplete="nickname"
+              />
+            </NameField>
+            <StatusText aria-live="polite">{isSubmitting && 'Submitting your score...'}</StatusText>
             {errorMessage !== null && <ErrorMessage role="alert">{errorMessage}</ErrorMessage>}
             <ButtonGroup>
               <Button type="submit" disabled={isSubmitting || !getIsValidPlayerName(playerName)}>

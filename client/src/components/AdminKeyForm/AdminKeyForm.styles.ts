@@ -1,30 +1,28 @@
 import styled from 'styled-components';
-import { TextInput } from '../../styles/Panel';
+import { Card } from '../../styles/Card';
 
-/** Styled title. */
-export const Title = styled.h1`
-  color: ${({ theme }) => theme.colors.text};
-  margin-bottom: 1rem;
-  text-align: center;
+/** Narrow card for the single-field unlock form. */
+export const KeyCard = styled(Card)`
+  max-width: 520px;
 `;
 
-/** Styled description. */
-export const Description = styled.p`
-  color: ${({ theme }) => theme.colors.mutedText};
-  text-align: center;
-  margin-bottom: 2rem;
-`;
-
-/** Styled form. */
+/** Stacked form fields and actions. */
 export const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-width: 480px;
-  margin: 0 auto;
+
+  & > button {
+    width: 100%;
+  }
 `;
 
-/** Full-width admin key input. */
-export const KeyInput = styled(TextInput)`
-  width: 100%;
+/** Live verification status line. */
+export const StatusText = styled.div`
+  font-size: 0.8125rem;
+  color: ${({ theme }) => theme.colors.mutedText};
+
+  &:empty {
+    display: none;
+  }
 `;
