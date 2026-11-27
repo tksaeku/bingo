@@ -12,23 +12,23 @@ vi.mock('./services/api', () => ({
 
 describe('App navigation', () => {
   describe('without a verified admin key', () => {
-    it('hides the Manage Options link', () => {
+    it('shows Play and Leaderboard but no cards link', () => {
       localStorage.setItem('bingoBoard', createSavedBoardJson());
       renderWithProviders(<App />);
 
       expect(screen.getByRole('link', { name: 'Play' })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'Leaderboard' })).toBeInTheDocument();
-      expect(screen.queryByRole('link', { name: 'Manage Options' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Manage Cards' })).not.toBeInTheDocument();
     });
   });
 
   describe('with a verified admin key in sessionStorage', () => {
-    it('shows the Manage Options link', () => {
+    it('still hides the cards link', () => {
       sessionStorage.setItem('bingoAdminKey', 'verified');
       localStorage.setItem('bingoBoard', createSavedBoardJson());
       renderWithProviders(<App />);
 
-      expect(screen.getByRole('link', { name: 'Manage Options' })).toHaveAttribute('href', '/options');
+      expect(screen.queryByRole('link', { name: 'Manage Cards' })).not.toBeInTheDocument();
     });
   });
 
@@ -41,11 +41,19 @@ describe('App navigation', () => {
     });
   });
 
-  describe('visiting /options without a key', () => {
+  describe('visiting /cards without a key', () => {
     it('shows the admin key form', () => {
-      renderWithProviders(<App />, '/options');
+      renderWithProviders(<App />, '/cards');
 
       expect(screen.getByLabelText('Admin key')).toBeInTheDocument();
+    });
+  });
+
+  describe('visiting the old /options path', () => {
+    it('redirects to the cards page', () => {
+      renderWithProviders(<App />, '/options');
+
+      expect(screen.getByRole('heading', { name: 'Admin Access' })).toBeInTheDocument();
     });
   });
 });

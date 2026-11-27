@@ -4,6 +4,7 @@ import { TOTAL_CELLS } from '../../constants';
 import { useBingoBoard } from '../../hooks/useBingoBoard';
 import { leaderboardApi } from '../../services/api';
 import { Button } from '../../styles/Button';
+import { Callout, CalloutText, CalloutTitle } from '../../styles/Card';
 import { Eyebrow, HeroLead, HeroTitle, HeroTitleAccent, Page } from '../../styles/PageHero';
 import WinModal from '../WinModal/WinModal';
 import {
@@ -16,9 +17,6 @@ import {
   BoardSection,
   BoardSubtitle,
   BoardTitle,
-  Callout,
-  CalloutText,
-  CalloutTitle,
   CellButton,
   CellText,
   ColumnLetters,

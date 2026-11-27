@@ -1,4 +1,5 @@
 import styled, { css } from 'styled-components';
+import { Card } from '../../styles/Card';
 import { eyebrowText } from '../../styles/PageHero';
 
 /** Shared grid columns for header and body rows. */
@@ -14,49 +15,9 @@ const rowColumns = css`
   }
 `;
 
-/** Dark card holding the ranking table. */
-export const Card = styled.section`
+/** Card sized for the three-column ranking table. */
+export const LeaderboardCard = styled(Card)`
   max-width: 860px;
-  width: 100%;
-  padding: 2rem 1.875rem;
-  background-color: ${({ theme }) => theme.colors.surface};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radii.medium};
-  box-shadow: ${({ theme }) => theme.shadows.card};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
-    padding: 1.25rem 1rem;
-  }
-`;
-
-/** Card heading row: title on the left, Refresh on the right. */
-export const CardHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 1.5rem;
-`;
-
-/** Card heading. */
-export const CardTitle = styled.h2`
-  font-family: ${({ theme }) => theme.fonts.display};
-  font-weight: 400;
-  font-size: 1.75rem;
-  color: white;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
-    font-size: 1.375rem;
-  }
-`;
-
-/** Short line under the card heading. */
-export const CardSubtitle = styled.p`
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 300;
-  color: ${({ theme }) => theme.colors.mutedText};
 `;
 
 /** Ranking table. */
@@ -153,35 +114,4 @@ export const WinsCell = styled.div`
   @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
     font-size: 1.125rem;
   }
-`;
-
-/** Purple-edged message shown when nobody has won yet. */
-export const EmptyCallout = styled.div`
-  padding: 1.5rem 1.25rem;
-  background-color: ${({ theme }) => theme.colors.surfaceInset};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-left: 2px solid ${({ theme }) => theme.colors.primary};
-  border-radius: ${({ theme }) => theme.radii.small};
-`;
-
-/** Empty-state heading. */
-export const EmptyTitle = styled.p`
-  font-family: ${({ theme }) => theme.fonts.display};
-  font-size: 1.125rem;
-  color: white;
-`;
-
-/** Empty-state body copy. */
-export const EmptyText = styled.p`
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 300;
-  color: ${({ theme }) => theme.colors.mutedText};
-`;
-
-/** Loading line inside the card. */
-export const LoadingText = styled.p`
-  padding: 3rem 0;
-  text-align: center;
-  color: ${({ theme }) => theme.colors.mutedText};
 `;

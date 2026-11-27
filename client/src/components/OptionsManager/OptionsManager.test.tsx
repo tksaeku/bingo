@@ -21,16 +21,32 @@ describe('OptionsManager', () => {
       vi.mocked(optionsApi.getAll).mockResolvedValue(createOptions(3));
       renderWithProviders(<OptionsManager {...createProps()} />);
 
-      expect(screen.getByRole('status')).toHaveTextContent('Loading options...');
+      expect(screen.getByRole('status')).toHaveTextContent('Loading cards...');
       expect(await screen.findByText('Option 0')).toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: 'Current Options (3)' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Current Cards (3)' })).toBeInTheDocument();
     });
 
     it('shows the empty state', async () => {
       vi.mocked(optionsApi.getAll).mockResolvedValue([]);
       renderWithProviders(<OptionsManager {...createProps()} />);
 
-      expect(await screen.findByText(/No options yet/)).toBeInTheDocument();
+      expect(await screen.findByText(/No cards yet/)).toBeInTheDocument();
+    });
+
+    it('warns when the deck is too small to fill a board', async () => {
+      vi.mocked(optionsApi.getAll).mockResolvedValue(createOptions(20));
+      renderWithProviders(<OptionsManager {...createProps()} />);
+
+      expect(await screen.findByText('Not enough cards to play')).toBeInTheDocument();
+      expect(screen.getByText(/Add 4 more/)).toBeInTheDocument();
+    });
+
+    it('hides the warning once the deck can fill a board', async () => {
+      vi.mocked(optionsApi.getAll).mockResolvedValue(createOptions(24));
+      renderWithProviders(<OptionsManager {...createProps()} />);
+
+      await screen.findByText('Option 0');
+      expect(screen.queryByText('Not enough cards to play')).not.toBeInTheDocument();
     });
 
     it('shows an error when loading fails', async () => {
@@ -60,9 +76,9 @@ describe('OptionsManager', () => {
       renderWithProviders(<OptionsManager {...createProps()} />);
       await screen.findByText('Option 0');
 
-      const input = screen.getByLabelText('New option');
+      const input = screen.getByLabelText('New card');
       await userEvent.type(input, '  Fresh idea  ');
-      await userEvent.click(screen.getByRole('button', { name: 'Add Option' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Add Card' }));
 
       expect(optionsApi.create).toHaveBeenCalledWith('Fresh idea', 'secret');
       await waitFor(() => expect(input).toHaveValue(''));
@@ -75,10 +91,10 @@ describe('OptionsManager', () => {
     it('keeps Add disabled for blank text', async () => {
       vi.mocked(optionsApi.getAll).mockResolvedValue([]);
       renderWithProviders(<OptionsManager {...createProps()} />);
-      await screen.findByText(/No options yet/);
+      await screen.findByText(/No cards yet/);
 
-      await userEvent.type(screen.getByLabelText('New option'), '   ');
-      expect(screen.getByRole('button', { name: 'Add Option' })).toBeDisabled();
+      await userEvent.type(screen.getByLabelText('New card'), '   ');
+      expect(screen.getByRole('button', { name: 'Add Card' })).toBeDisabled();
     });
 
     it('shows a duplicate message on 409 and keeps the typed text', async () => {
@@ -87,11 +103,11 @@ describe('OptionsManager', () => {
       renderWithProviders(<OptionsManager {...createProps()} />);
       await screen.findByText('Option 0');
 
-      await userEvent.type(screen.getByLabelText('New option'), 'option 0');
-      await userEvent.click(screen.getByRole('button', { name: 'Add Option' }));
+      await userEvent.type(screen.getByLabelText('New card'), 'option 0');
+      await userEvent.click(screen.getByRole('button', { name: 'Add Card' }));
 
-      expect(await screen.findByRole('alert')).toHaveTextContent('That option already exists.');
-      expect(screen.getByLabelText('New option')).toHaveValue('option 0');
+      expect(await screen.findByRole('alert')).toHaveTextContent('That card already exists.');
+      expect(screen.getByLabelText('New card')).toHaveValue('option 0');
       expect(screen.getByText('Option 0')).toBeInTheDocument();
     });
 
@@ -101,8 +117,8 @@ describe('OptionsManager', () => {
       renderWithProviders(<OptionsManager {...createProps()} />);
       await screen.findByText('Option 0');
 
-      await userEvent.type(screen.getByLabelText('New option'), 'More');
-      await userEvent.click(screen.getByRole('button', { name: 'Add Option' }));
+      await userEvent.type(screen.getByLabelText('New card'), 'More');
+      await userEvent.click(screen.getByRole('button', { name: 'Add Card' }));
 
       expect(await screen.findByRole('alert')).toHaveTextContent('Option pool is full');
     });
@@ -113,10 +129,10 @@ describe('OptionsManager', () => {
       renderWithProviders(<OptionsManager {...createProps()} />);
       await screen.findByText('Option 0');
 
-      await userEvent.type(screen.getByLabelText('New option'), 'Slow');
-      await userEvent.click(screen.getByRole('button', { name: 'Add Option' }));
+      await userEvent.type(screen.getByLabelText('New card'), 'Slow');
+      await userEvent.click(screen.getByRole('button', { name: 'Add Card' }));
 
-      expect(screen.getByRole('button', { name: 'Add Option' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Add Card' })).toBeDisabled();
       expect(optionsApi.create).toHaveBeenCalledTimes(1);
     });
   });
@@ -131,13 +147,13 @@ describe('OptionsManager', () => {
 
       await userEvent.click(screen.getByRole('button', { name: 'Delete Option 0' }));
       expect(optionsApi.delete).not.toHaveBeenCalled();
-      expect(screen.getByText('Delete this option?')).toBeInTheDocument();
+      expect(screen.getByText('Delete this card?')).toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
       expect(optionsApi.delete).toHaveBeenCalledWith('option-0', 'secret');
-      await waitFor(() => expect(screen.queryByText('Delete this option?')).not.toBeInTheDocument());
+      await waitFor(() => expect(screen.queryByText('Delete this card?')).not.toBeInTheDocument());
       expect(confirmSpy).not.toHaveBeenCalled();
-      expect(screen.getByLabelText('New option')).toHaveFocus();
+      expect(screen.getByLabelText('New card')).toHaveFocus();
       expect(screen.getByText('Option 1')).toBeInTheDocument();
     });
 
@@ -175,8 +191,8 @@ describe('OptionsManager', () => {
       renderWithProviders(<OptionsManager {...props} />);
       await screen.findByText('Option 0');
 
-      await userEvent.type(screen.getByLabelText('New option'), 'Thing');
-      await userEvent.click(screen.getByRole('button', { name: 'Add Option' }));
+      await userEvent.type(screen.getByLabelText('New card'), 'Thing');
+      await userEvent.click(screen.getByRole('button', { name: 'Add Card' }));
 
       await waitFor(() => expect(props.onUnauthorized).toHaveBeenCalledTimes(1));
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();

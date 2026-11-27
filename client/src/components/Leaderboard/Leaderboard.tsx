@@ -1,25 +1,18 @@
 import type { ReactElement, ReactNode } from 'react';
 import { useLeaderboard } from '../../hooks/useLeaderboard';
 import { Button } from '../../styles/Button';
-import { ErrorMessage } from '../../styles/Panel';
+import { ErrorMessage } from '../../styles/Form';
 import { Eyebrow, Hero, HeroLead, HeroTitle, HeroTitleAccent, Page } from '../../styles/PageHero';
 import {
-  Card,
+  Callout,
+  CalloutText,
+  CalloutTitle,
   CardHeader,
+  CardLoading,
   CardSubtitle,
   CardTitle,
-  EmptyCallout,
-  EmptyText,
-  EmptyTitle,
-  HeaderRow,
-  LoadingText,
-  NameCell,
-  RankCell,
-  Row,
-  Table,
-  WinsCell,
-  WinsHeader,
-} from './Leaderboard.styles';
+} from '../../styles/Card';
+import { HeaderRow, LeaderboardCard, NameCell, RankCell, Row, Table, WinsCell, WinsHeader } from './Leaderboard.styles';
 
 /** Number of highlighted top ranks. */
 const TOP_THREE_COUNT = 3;
@@ -43,7 +36,7 @@ const LeaderboardPage = ({ children }: LeaderboardPageProps): ReactElement => (
       </HeroTitle>
       <HeroLead>The sharpest eyes on the floor, ranked by every five-in-a-row they called.</HeroLead>
     </Hero>
-    <Card aria-labelledby="leaderboard-title">{children}</Card>
+    <LeaderboardCard aria-labelledby="leaderboard-title">{children}</LeaderboardCard>
   </Page>
 );
 LeaderboardPage.displayName = 'LeaderboardPage';
@@ -59,9 +52,9 @@ const Leaderboard = (): ReactElement => {
     return (
       <LeaderboardPage>
         <CardTitle id="leaderboard-title">Top Players</CardTitle>
-        <LoadingText role="status" aria-live="polite">
+        <CardLoading role="status" aria-live="polite">
           Loading leaderboard...
-        </LoadingText>
+        </CardLoading>
       </LeaderboardPage>
     );
   }
@@ -81,10 +74,10 @@ const Leaderboard = (): ReactElement => {
       {error !== null && <ErrorMessage role="alert">{error}</ErrorMessage>}
 
       {entries !== null && entries.length === 0 && error === null && (
-        <EmptyCallout>
-          <EmptyTitle>No winners yet. Be the first!</EmptyTitle>
-          <EmptyText>Get five in a row on the board and your name lands here.</EmptyText>
-        </EmptyCallout>
+        <Callout>
+          <CalloutTitle>No winners yet. Be the first!</CalloutTitle>
+          <CalloutText>Get five in a row on the board and your name lands here.</CalloutText>
+        </Callout>
       )}
 
       {entries !== null && entries.length > 0 && (

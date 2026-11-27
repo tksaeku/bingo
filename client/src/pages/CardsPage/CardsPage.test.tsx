@@ -5,7 +5,7 @@ import { adminApi, optionsApi } from '../../services/api';
 import { createAxiosError } from '../../test/axiosErrors';
 import { createOptions } from '../../test/factories';
 import { renderWithProviders } from '../../test/renderWithProviders';
-import OptionsPage from './OptionsPage';
+import CardsPage from './CardsPage';
 
 vi.mock('../../services/api', () => ({
   optionsApi: { getAll: vi.fn(), create: vi.fn(), delete: vi.fn() },
@@ -13,10 +13,10 @@ vi.mock('../../services/api', () => ({
   adminApi: { verify: vi.fn() },
 }));
 
-describe('OptionsPage', () => {
+describe('CardsPage', () => {
   describe('without a stored key', () => {
-    it('shows the admin key form and no options', () => {
-      renderWithProviders(<OptionsPage />);
+    it('shows the admin key form and no cards', () => {
+      renderWithProviders(<CardsPage />);
 
       expect(screen.getByLabelText('Admin key')).toBeInTheDocument();
       expect(optionsApi.getAll).not.toHaveBeenCalled();
@@ -25,7 +25,7 @@ describe('OptionsPage', () => {
     it('verifies a correct key, stores it, and reveals the editor', async () => {
       vi.mocked(adminApi.verify).mockResolvedValue(undefined);
       vi.mocked(optionsApi.getAll).mockResolvedValue(createOptions(1));
-      renderWithProviders(<OptionsPage />);
+      renderWithProviders(<CardsPage />);
 
       await userEvent.type(screen.getByLabelText('Admin key'), ' good-key {Enter}');
 
@@ -36,7 +36,7 @@ describe('OptionsPage', () => {
 
     it('rejects a wrong key without storing it', async () => {
       vi.mocked(adminApi.verify).mockRejectedValue(createAxiosError(401, 'Unauthorized'));
-      renderWithProviders(<OptionsPage />);
+      renderWithProviders(<CardsPage />);
 
       await userEvent.type(screen.getByLabelText('Admin key'), 'bad-key{Enter}');
 
@@ -46,7 +46,7 @@ describe('OptionsPage', () => {
     });
 
     it('does not call the server for an empty key', async () => {
-      renderWithProviders(<OptionsPage />);
+      renderWithProviders(<CardsPage />);
 
       await userEvent.type(screen.getByLabelText('Admin key'), '   {Enter}');
 
@@ -59,7 +59,7 @@ describe('OptionsPage', () => {
     it('shows the editor', async () => {
       sessionStorage.setItem('bingoAdminKey', 'stored');
       vi.mocked(optionsApi.getAll).mockResolvedValue(createOptions(1));
-      renderWithProviders(<OptionsPage />);
+      renderWithProviders(<CardsPage />);
 
       expect(await screen.findByText('Option 0')).toBeInTheDocument();
     });
@@ -68,11 +68,11 @@ describe('OptionsPage', () => {
       sessionStorage.setItem('bingoAdminKey', 'stale');
       vi.mocked(optionsApi.getAll).mockResolvedValue(createOptions(1));
       vi.mocked(optionsApi.create).mockRejectedValue(createAxiosError(401, 'Unauthorized'));
-      renderWithProviders(<OptionsPage />);
+      renderWithProviders(<CardsPage />);
       await screen.findByText('Option 0');
 
-      await userEvent.type(screen.getByLabelText('New option'), 'Thing');
-      await userEvent.click(screen.getByRole('button', { name: 'Add Option' }));
+      await userEvent.type(screen.getByLabelText('New card'), 'Thing');
+      await userEvent.click(screen.getByRole('button', { name: 'Add Card' }));
 
       await waitFor(() => expect(screen.getByLabelText('Admin key')).toBeInTheDocument());
       expect(sessionStorage.getItem('bingoAdminKey')).toBeNull();

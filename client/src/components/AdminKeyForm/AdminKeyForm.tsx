@@ -1,8 +1,9 @@
 import { useId, useState } from 'react';
 import type { FormEvent, ReactElement } from 'react';
 import { Button } from '../../styles/Button';
-import { ErrorMessage, FieldLabel, Panel } from '../../styles/Panel';
-import { Description, Form, KeyInput, Title } from './AdminKeyForm.styles';
+import { CardHeader, CardSubtitle, CardTitle } from '../../styles/Card';
+import { ErrorMessage, FieldLabel, TextInput } from '../../styles/Form';
+import { Form, KeyCard, StatusText } from './AdminKeyForm.styles';
 
 interface AdminKeyFormProps {
   /** Verifies the entered key with the server; resolves true when accepted. */
@@ -25,13 +26,17 @@ const AdminKeyForm = ({ onVerify, isVerifying, errorMessage }: AdminKeyFormProps
   };
 
   return (
-    <Panel aria-labelledby="admin-key-title">
-      <Title id="admin-key-title">Admin Access</Title>
-      <Description>Enter the admin key to manage bingo options.</Description>
+    <KeyCard aria-labelledby="admin-key-title">
+      <CardHeader>
+        <div>
+          <CardTitle id="admin-key-title">Admin Access</CardTitle>
+          <CardSubtitle>Enter the admin key to manage the bingo cards.</CardSubtitle>
+        </div>
+      </CardHeader>
       <Form onSubmit={handleSubmit}>
         <div>
           <FieldLabel htmlFor={inputId}>Admin key</FieldLabel>
-          <KeyInput
+          <TextInput
             id={inputId}
             type="password"
             value={candidateKey}
@@ -39,13 +44,13 @@ const AdminKeyForm = ({ onVerify, isVerifying, errorMessage }: AdminKeyFormProps
             autoComplete="off"
           />
         </div>
-        <div aria-live="polite">{isVerifying && 'Verifying...'}</div>
+        <StatusText aria-live="polite">{isVerifying && 'Verifying...'}</StatusText>
         {errorMessage !== null && <ErrorMessage role="alert">{errorMessage}</ErrorMessage>}
         <Button type="submit" disabled={isVerifying}>
           {isVerifying ? 'Verifying...' : 'Unlock'}
         </Button>
       </Form>
-    </Panel>
+    </KeyCard>
   );
 };
 AdminKeyForm.displayName = 'AdminKeyForm';

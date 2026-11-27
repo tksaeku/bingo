@@ -419,32 +419,6 @@ export const ProgressCaption = styled.p`
   color: ${({ theme }) => theme.colors.mutedText};
 `;
 
-/** Purple-edged callout card. */
-export const Callout = styled.div`
-  padding: 1.25rem 1.25rem 1.25rem 1.125rem;
-  background-color: ${({ theme }) => theme.colors.surfaceInset};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-left: 2px solid ${({ theme }) => theme.colors.primary};
-  border-radius: ${({ theme }) => theme.radii.small};
-`;
-
-/** Callout heading. */
-export const CalloutTitle = styled.h3`
-  font-family: ${({ theme }) => theme.fonts.display};
-  font-weight: 400;
-  font-size: 1rem;
-  color: white;
-`;
-
-/** Callout body copy. */
-export const CalloutText = styled.p`
-  margin-top: 0.5rem;
-  font-size: 0.8125rem;
-  font-weight: 300;
-  line-height: 1.6;
-  color: ${({ theme }) => theme.colors.mutedText};
-`;
-
 /** Small print under the board actions. */
 export const BoardHint = styled.p`
   font-size: 0.75rem;
