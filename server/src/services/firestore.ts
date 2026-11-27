@@ -1,37 +1,35 @@
-import admin, { credential } from 'firebase-admin';
-import dotenv from 'dotenv';
-import fs from 'fs';
-import path from 'path';
+import path from 'node:path';
+import { applicationDefault, cert, getApps, initializeApp, type Credential } from 'firebase-admin/app';
+import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 
-dotenv.config();
-try {
-  // 1) If GOOGLE_APPLICATION_CREDENTIALS is set, initialize with default (firebase-admin will pick it up)
-  let credentialsJSON = null;
-  const candidatePath = path.resolve(__dirname, '../../serviceAccountKey.json');
-  if (fs.existsSync(candidatePath)) {
-    console.log('Initializing Firebase Admin SDK with serviceAccountKey.json file');
-    const raw = fs.readFileSync(candidatePath, 'utf8');
-    credentialsJSON = JSON.parse(raw);
-    admin.initializeApp({
-      credential: admin.credential.cert(credentialsJSON),
-      projectId: process.env.FIREBASE_PROJECT_ID || credentialsJSON.project_id,
-    });
-  } else {
-    console.log('Initializing Firebase Admin SDK with application default credentials');
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-      projectId: process.env.FIREBASE_PROJECT_ID,
-    });
+/** Project ID used when running against the Firestore emulator. */
+const EMULATOR_PROJECT_ID = 'demo-bingo';
+
+/**
+ * Resolves the Admin SDK credential.
+ * `FIREBASE_SERVICE_ACCOUNT_PATH` (resolved against the working directory) takes precedence so a
+ * machine-wide `GOOGLE_APPLICATION_CREDENTIALS` belonging to another project cannot leak in;
+ * otherwise Application Default Credentials are used (ambient credentials on App Hosting).
+ */
+function getCredential(): Credential {
+  const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
+  if (serviceAccountPath) {
+    return cert(path.resolve(serviceAccountPath));
   }
-} catch (err) {
-  console.error('Failed to initialize Firebase Admin SDK:', err);
-  throw err;
+  return applicationDefault();
 }
 
-export const db = admin.firestore();
-
-export function getCollection(name: string) {
-  return db.collection(name);
+/**
+ * Returns the Firestore instance, initializing the Admin SDK on first use.
+ * When FIRESTORE_EMULATOR_HOST is set, no credentials are needed and the emulator is used.
+ */
+export function getDatabase(): Firestore {
+  if (getApps().length === 0) {
+    if (process.env.FIRESTORE_EMULATOR_HOST) {
+      initializeApp({ projectId: process.env.GCLOUD_PROJECT ?? EMULATOR_PROJECT_ID });
+    } else {
+      initializeApp({ credential: getCredential() });
+    }
+  }
+  return getFirestore();
 }
-
-export default admin;

@@ -138,3 +138,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 server/serviceAccountKey.json
+
+# Source dirs must never hold compiled output
+server/src/**/*.js

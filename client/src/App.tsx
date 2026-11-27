@@ -1,42 +1,47 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import BingoBoard from './components/BingoBoard';
-import OptionsManager from './components/OptionsManager';
-import Leaderboard from './components/Leaderboard';
-import './App.scss';
+import type { ReactElement } from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { ThemeProvider } from 'styled-components';
+import BingoBoard from './components/BingoBoard/BingoBoard';
+import Leaderboard from './components/Leaderboard/Leaderboard';
+import { useAdminKey } from './hooks/useAdminKey';
+import OptionsPage from './pages/OptionsPage/OptionsPage';
+import { Brand, Main, NavContent, NavItem, NavLinks, Navbar, Shell } from './App.styles';
+import { GlobalStyle } from './styles/GlobalStyle';
+import { theme } from './theme';
 
-function App() {
+/** App shell: navigation (admin link only with a verified key) and routes. Needs a Router ancestor. */
+const App = (): ReactElement => {
+  const { adminKey } = useAdminKey();
+
   return (
-    <Router>
-      <div className="app">
-        <nav className="navbar">
-          <div className="nav-content">
-            <Link to="/" className="nav-brand">
-              US Open Bingo Game
-            </Link>
-            <div className="nav-links">
-              <Link to="/" className="nav-link">
+    <ThemeProvider theme={theme}>
+      <GlobalStyle />
+      <Shell>
+        <Navbar aria-label="Main">
+          <NavContent>
+            <Brand to="/">US Open Bingo Game</Brand>
+            <NavLinks>
+              <NavItem to="/" end>
                 Play
-              </Link>
-              {/* <Link to="/options" className="nav-link">
-                Manage Options
-              </Link> */}
-              <Link to="/leaderboard" className="nav-link">
-                Leaderboard
-              </Link>
-            </div>
-          </div>
-        </nav>
+              </NavItem>
+              {adminKey !== null && <NavItem to="/options">Manage Options</NavItem>}
+              <NavItem to="/leaderboard">Leaderboard</NavItem>
+            </NavLinks>
+          </NavContent>
+        </Navbar>
 
-        <main className="main-content">
+        <Main>
           <Routes>
             <Route path="/" element={<BingoBoard />} />
-            <Route path="/options" element={<OptionsManager />} />
+            <Route path="/options" element={<OptionsPage />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </main>
-      </div>
-    </Router>
+        </Main>
+      </Shell>
+    </ThemeProvider>
   );
-}
+};
+App.displayName = 'App';
 
 export default App;

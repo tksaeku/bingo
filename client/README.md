@@ -1,73 +1,68 @@
-# React + TypeScript + Vite
+# Bingo client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + TypeScript single-page app built with Vite 7. It renders the bingo board, the leaderboard and the admin option editor. The server owns validation, deduplication, win counting and authorization; the client mirrors those rules only for UX. Product behavior and the API contract are in `../.claude/docs/spec.md`.
 
-Currently, two official plugins are available:
+## Scripts
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Run from the repo root with `-w client`, or from `client/`:
 
-## React Compiler
+| Script | What it does |
+|---|---|
+| `npm run dev` | Vite dev server on :5173 |
+| `npm run build` | `tsc -b` then `vite build` into `dist/` |
+| `npm run preview` | Serve the built app locally |
+| `npm run typecheck` | `tsc -b` |
+| `npm run lint` | `eslint .` (zero warnings expected) |
+| `npm test` | `vitest run` (jsdom + Testing Library) |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Configuration
 
-## Expanding the ESLint configuration
+`VITE_API_URL` is the API base URL, read from `.env.development` / `.env.production`. When unset (production builds), `src/services/api.ts` uses the same-origin `/api`, because the server serves the client.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Structure
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+  main.tsx            entry: StrictMode + BrowserRouter
+  App.tsx             theme + global style, nav, routes
+  types.ts            shared types
+  constants.ts        board size, limits, storage keys, refresh interval
+  theme.ts            design tokens (styled-components ThemeProvider)
+  styles/             GlobalStyle and shared styled primitives (Button, Panel, inputs, messages)
+  components/<Name>/  <Name>.tsx, <Name>.styles.ts, <Name>.test.tsx
+  pages/              route-level components (OptionsPage)
+  hooks/              data and behavior hooks
+  game/               pure game logic (no React)
+  services/           API client, error helpers, storage helpers
+  test/               test setup, factories, render helper
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Components
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- `BingoBoard` - the 5x5 board; cells are toggle buttons (`aria-pressed`).
+- `WinModal` - accessible dialog (focus trap, Escape, labelled input) that submits the player name with pending, error and retry states, then offers Play Again.
+- `Leaderboard` - top 20, refreshed every 30 seconds and on demand without blanking the table.
+- `OptionsManager` - add and delete options with in-page delete confirmation.
+- `AdminKeyForm` - collects the admin key; the key is stored only after the server accepts it.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### Hooks
+
+- `useOptions`, `useLeaderboard` return `{ data, loading, error, refetch }`. Only the first load reports `loading`; in-flight requests are aborted on unmount.
+- `useAdminKey` holds the verified key in `sessionStorage` (shared across components) and exposes `verifyAndStore` and `clearAdminKey`.
+- `useBingoBoard` restores a valid saved board or generates one, persists every mark, and opens the win modal once per board.
+- `useFocusTrap` traps focus in a container and handles Escape.
+
+### Game logic (`src/game`)
+
+- `board.ts` - Fisher-Yates shuffle and board generation (24 distinct options around a free center).
+- `winLines.ts` - the 12 winning lines generated from the board size and `getHasWon`.
+- `savedBoard.ts` - validation and parsing of the board persisted in `localStorage`; invalid data yields `null` so a new board is generated.
+- `playerName.ts` - trim and whitespace collapse, 1-20 character check.
+
+### Admin access
+
+The "Manage Options" link renders only while a verified key is in `sessionStorage`. `/options` shows the key form until `GET /api/admin/verify` accepts the key. Option writes send the key in the `x-admin-key` header; a 401 clears the stored key and returns to the form.
+
+## Testing
+
+Component tests mock `src/services/api.ts`; game logic is tested directly. Shared helpers live in `src/test/`: `setup.ts` (jest-dom matchers, cleanup, storage reset), `renderWithProviders.tsx`, `factories.ts`, `axiosErrors.ts`.

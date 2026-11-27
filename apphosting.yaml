@@ -1,0 +1,15 @@
+# Firebase App Hosting config for the `bingo` backend.
+# One build serves both the API (/api/*) and the client (everything else), so a rollout ships them together.
+scripts:
+  buildCommand: npm run build
+  runCommand: npm start
+
+runConfig:
+  minInstances: 0
+  maxInstances: 2
+
+env:
+  - variable: ADMIN_KEY
+    secret: bingo-admin-key
+    availability:
+      - RUNTIME

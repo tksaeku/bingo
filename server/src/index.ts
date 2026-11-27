@@ -1,31 +1,15 @@
-import express from 'express';
-import cors from 'cors';
-import './services/firestore';
-import dotenv from 'dotenv';
-import optionsRouter from './routes/options';
-import leaderboardRouter from './routes/leaderboard';
+import 'dotenv/config';
+import { createApp } from './app';
+import { parsePort } from './config';
+import { createLogger } from './logger';
 
-dotenv.config();
+const logger = createLogger('server');
+const port = parsePort(process.env.PORT);
 
-const app = express();
-const PORT = process.env.PORT || 5174;
+if (!process.env.ADMIN_KEY) {
+  logger.warn({}, 'ADMIN_KEY is not set; admin endpoints will return 503');
+}
 
-// Middleware
-app.options('*', cors());  // Enable pre-flight requests for all routes
-app.use(cors());
-app.use(express.json());
-
-// Routes
-app.use('/api/options', optionsRouter);
-app.use('/api/leaderboard', leaderboardRouter);
-
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
-
-
-// Firestore initialized in services; start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+createApp().listen(port, () => {
+  logger.info({ port }, 'Server listening');
 });
