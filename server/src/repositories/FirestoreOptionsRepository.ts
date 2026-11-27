@@ -19,10 +19,10 @@ export class FirestoreOptionsRepository implements OptionsRepository {
     return snapshot.docs.map((document) => document.data());
   }
 
-  /** Inserts an option in one transaction: reads the pool, rejects duplicates and a full pool, then writes. */
-  async createUniqueOption(input: { text: string; maxOptions: number }): Promise<CreateOptionResult> {
+  /** Inserts an option in one transaction: reads the pool, rejects duplicates, then writes. */
+  async createUniqueOption(text: string): Promise<CreateOptionResult> {
     const collection = this.#getCollection();
-    const dedupeKey = getOptionDedupeKey(input.text);
+    const dedupeKey = getOptionDedupeKey(text);
 
     return getDatabase().runTransaction(async (transaction): Promise<CreateOptionResult> => {
       const snapshot = await transaction.get(collection);
@@ -30,11 +30,8 @@ export class FirestoreOptionsRepository implements OptionsRepository {
       if (isDuplicate) {
         return { status: 'duplicate' };
       }
-      if (snapshot.size >= input.maxOptions) {
-        return { status: 'full' };
-      }
       const reference = collection.doc();
-      const option: Option = { id: reference.id, text: input.text, createdAt: new Date().toISOString() };
+      const option: Option = { id: reference.id, text, createdAt: new Date().toISOString() };
       transaction.set(reference, option);
       return { status: 'created', option };
     });

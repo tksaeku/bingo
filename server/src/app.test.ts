@@ -29,7 +29,7 @@ describe('createApp', () => {
         listOptions: async () => {
           throw new Error('secret firestore detail');
         },
-        createUniqueOption: async () => ({ status: 'full' }),
+        createUniqueOption: async () => ({ status: 'duplicate' }),
         deleteOption: async () => false,
       },
     } as any);

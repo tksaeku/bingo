@@ -62,11 +62,11 @@ describe('/api/options', () => {
       expect(response.status).toBe(409);
     });
 
-    it('returns 422 when the pool already has 200 options', async () => {
-      const texts = Array.from({ length: 200 }, (_unused, index) => `Option ${index}`);
+    it('returns 201 when the pool already has more than 200 options', async () => {
+      const texts = Array.from({ length: 250 }, (_unused, index) => `Option ${index}`);
       const { app } = createTestApp({ optionsRepository: new FakeOptionsRepository(texts) });
       const response = await request(app).post('/api/options').set('x-admin-key', TEST_ADMIN_KEY).send({ text: 'Extra' });
-      expect(response.status).toBe(422);
+      expect(response.status).toBe(201);
     });
 
     it('returns 429 after 30 admin writes per minute', async () => {

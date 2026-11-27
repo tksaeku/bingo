@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { ADMIN_KEY_HEADER } from '../constants';
-import type { LeaderboardEntry, Option } from '../types';
+import type { AnalyticsRangeDays, AnalyticsSummary, EventBatch, LeaderboardEntry, Option } from '../types';
 
 /** API base URL from `VITE_API_URL`, when configured. */
 const configuredBaseUrl: string | undefined = import.meta.env.VITE_API_URL;
@@ -49,5 +49,33 @@ export const leaderboardApi = {
 export const adminApi = {
   verify: async (adminKey: string, signal?: AbortSignal): Promise<void> => {
     await apiClient.get('/admin/verify', { ...getAdminConfig(adminKey), signal });
+  },
+};
+
+/** Analytics endpoints. */
+export const analyticsApi = {
+  /** Sends a batch and resolves with the HTTP status; rejects only when no response arrives. */
+  sendEvents: async (batch: EventBatch, options: { keepalive: boolean }): Promise<number> => {
+    if (options.keepalive) {
+      const response = await fetch(`${API_BASE_URL}/analytics/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(batch),
+        keepalive: true,
+      });
+      return response.status;
+    }
+    const response = await apiClient.post('/analytics/events', batch, {
+      validateStatus: () => true,
+    });
+    return response.status;
+  },
+  getSummary: async (adminKey: string, days: AnalyticsRangeDays, signal?: AbortSignal): Promise<AnalyticsSummary> => {
+    const response = await apiClient.get<AnalyticsSummary>('/admin/analytics', {
+      ...getAdminConfig(adminKey),
+      params: { days },
+      signal,
+    });
+    return response.data;
   },
 };

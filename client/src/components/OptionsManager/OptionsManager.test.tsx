@@ -111,16 +111,16 @@ describe('OptionsManager', () => {
       expect(screen.getByText('Option 0')).toBeInTheDocument();
     });
 
-    it('shows the server message when the pool is full (422)', async () => {
+    it('shows the server message for other add failures', async () => {
       vi.mocked(optionsApi.getAll).mockResolvedValue(createOptions(1));
-      vi.mocked(optionsApi.create).mockRejectedValue(createAxiosError(422, 'Option pool is full'));
+      vi.mocked(optionsApi.create).mockRejectedValue(createAxiosError(400, 'Invalid request body'));
       renderWithProviders(<OptionsManager {...createProps()} />);
       await screen.findByText('Option 0');
 
       await userEvent.type(screen.getByLabelText('New card'), 'More');
       await userEvent.click(screen.getByRole('button', { name: 'Add Card' }));
 
-      expect(await screen.findByRole('alert')).toHaveTextContent('Option pool is full');
+      expect(await screen.findByRole('alert')).toHaveTextContent('Invalid request body');
     });
 
     it('disables Add while the request is in flight', async () => {

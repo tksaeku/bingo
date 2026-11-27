@@ -1,4 +1,3 @@
-import { MAX_OPTIONS } from '../../constants';
 import { HttpError } from '../../HttpError';
 import type { OptionsRepository } from '../../repositories/repositoryTypes';
 import type { Option } from '../../types';
@@ -11,7 +10,7 @@ export type OptionsService = {
 };
 
 /**
- * Creates the options service: owns duplicate and pool-size rules on top of
+ * Creates the options service: owns the duplicate rule on top of
  * the repository's atomic primitives.
  */
 export function createOptionsService(repository: OptionsRepository): OptionsService {
@@ -19,12 +18,9 @@ export function createOptionsService(repository: OptionsRepository): OptionsServ
     listOptions: (): Promise<Option[]> => repository.listOptions(),
 
     async addOption(text: string): Promise<Option> {
-      const result = await repository.createUniqueOption({ text: collapseWhitespace(text), maxOptions: MAX_OPTIONS });
+      const result = await repository.createUniqueOption(collapseWhitespace(text));
       if (result.status === 'duplicate') {
         throw new HttpError(409, 'Option already exists');
-      }
-      if (result.status === 'full') {
-        throw new HttpError(422, `Option pool is full (max ${MAX_OPTIONS})`);
       }
       return result.option;
     },

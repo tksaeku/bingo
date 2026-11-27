@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { ReactElement } from 'react';
 import { TOTAL_CELLS } from '../../constants';
 import { useBingoBoard } from '../../hooks/useBingoBoard';
+import { trackEvent } from '../../services/analytics';
 import { leaderboardApi } from '../../services/api';
 import { Button } from '../../styles/Button';
 import { Callout, CalloutText, CalloutTitle } from '../../styles/Card';
@@ -98,7 +99,13 @@ const BingoBoard = (): ReactElement => {
 
   const handleSubmitWin = async (playerName: string): Promise<void> => {
     await submitWin(playerName);
+    trackEvent({ name: 'score_submitted' });
     markScoreSubmitted();
+  };
+
+  const handlePlayAgain = (): void => {
+    trackEvent({ name: 'play_again' });
+    handleStartNewBoard();
   };
 
   if (isLoading) {
@@ -200,9 +207,7 @@ const BingoBoard = (): ReactElement => {
           </BoardActions>
         </BoardExtras>
       </BoardCard>
-      {isWinModalOpen && (
-        <WinModal onSubmit={handleSubmitWin} onClose={closeWinModal} onPlayAgain={handleStartNewBoard} />
-      )}
+      {isWinModalOpen && <WinModal onSubmit={handleSubmitWin} onClose={closeWinModal} onPlayAgain={handlePlayAgain} />}
     </Page>
   );
 };

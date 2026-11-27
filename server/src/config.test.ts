@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseCorsOrigins, parsePort, parseTrustedProxyHops } from './config';
+import { parseAnalyticsEnabled, parseCorsOrigins, parsePort, parseTrustedProxyHops } from './config';
 import { DEFAULT_CORS_ORIGINS } from './constants';
 
 describe('config', () => {
@@ -35,5 +35,15 @@ describe('parseTrustedProxyHops', () => {
     expect(parseTrustedProxyHops('-1')).toBe(1);
     expect(parseTrustedProxyHops('1.5')).toBe(1);
     expect(parseTrustedProxyHops('abc')).toBe(1);
+  });
+});
+
+describe('parseAnalyticsEnabled', () => {
+  it('is true only for the exact string "true"', () => {
+    expect(parseAnalyticsEnabled('true')).toBe(true);
+  });
+
+  it.each([undefined, '', 'false', 'TRUE', '1', ' true'])('is false for %j', (value) => {
+    expect(parseAnalyticsEnabled(value)).toBe(false);
   });
 });

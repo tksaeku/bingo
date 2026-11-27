@@ -10,3 +10,7 @@ env:
     secret: bingo-admin-key
     availability:
       - RUNTIME
+  - variable: ANALYTICS_ENABLED
+    value: "true"
+    availability:
+      - RUNTIME

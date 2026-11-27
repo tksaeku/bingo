@@ -34,7 +34,7 @@ describe('FirestoreOptionsRepository', () => {
   describe('createUniqueOption', () => {
     it('creates the option inside one transaction, reading before writing', async () => {
       const { repository, database } = createRepository();
-      const result = await repository.createUniqueOption({ text: 'Gold costume', maxOptions: 200 });
+      const result = await repository.createUniqueOption('Gold costume');
       expect(result.status).toBe('created');
       expect(database.transactionCount).toBe(1);
       expect(database.log).toEqual(['tx:get', 'tx:set', 'tx:commit']);
@@ -43,7 +43,7 @@ describe('FirestoreOptionsRepository', () => {
 
     it('stores createdAt as a Timestamp and returns it as ISO', async () => {
       const { repository, database } = createRepository();
-      const result: any = await repository.createUniqueOption({ text: 'A', maxOptions: 200 });
+      const result: any = await repository.createUniqueOption('A');
       const raw: any = [...database.getRawDocuments('options').values()][0];
       expect(raw.createdAt).toBeInstanceOf(Timestamp);
       expect(result.option.createdAt).toBe(raw.createdAt.toDate().toISOString());
@@ -52,30 +52,16 @@ describe('FirestoreOptionsRepository', () => {
     it('reports a case-insensitive duplicate in the same transaction and writes nothing', async () => {
       const { repository, database } = createRepository();
       database.seed('options', { a: stored('Gold Costume', '2026-01-01T00:00:00.000Z') });
-      const result = await repository.createUniqueOption({ text: ' gold   costume ', maxOptions: 200 });
+      const result = await repository.createUniqueOption(' gold   costume ');
       expect(result).toEqual({ status: 'duplicate' });
       expect(database.transactionCount).toBe(1);
       expect(database.log).toEqual(['tx:get', 'tx:commit']);
       expect(database.getRawDocuments('options').size).toBe(1);
     });
 
-    it('enforces the cap inside the transaction', async () => {
-      const { repository, database } = createRepository();
-      const documents: Record<string, any> = {};
-      for (let index = 0; index < 200; index += 1) {
-        documents[`d${index}`] = stored(`Option ${index}`, '2026-01-01T00:00:00.000Z');
-      }
-      database.seed('options', documents);
-      const result = await repository.createUniqueOption({ text: 'One more', maxOptions: 200 });
-      expect(result).toEqual({ status: 'full' });
-      expect(database.transactionCount).toBe(1);
-      expect(database.log).toEqual(['tx:get', 'tx:commit']);
-      expect(database.getRawDocuments('options').size).toBe(200);
-    });
-
     it('never performs non-transactional reads', async () => {
       const { repository, database } = createRepository();
-      await repository.createUniqueOption({ text: 'A', maxOptions: 200 });
+      await repository.createUniqueOption('A');
       expect(database.log).not.toContain('read');
     });
   });

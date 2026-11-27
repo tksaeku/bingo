@@ -22,17 +22,14 @@ export class FakeOptionsRepository implements OptionsRepository {
     return [...this.options].sort((first, second) => Date.parse(first.createdAt) - Date.parse(second.createdAt));
   }
 
-  async createUniqueOption(input: { text: string; maxOptions: number }): Promise<CreateOptionResult> {
-    const dedupeKey = getOptionDedupeKey(input.text);
+  async createUniqueOption(text: string): Promise<CreateOptionResult> {
+    const dedupeKey = getOptionDedupeKey(text);
     if (this.options.some((option) => getOptionDedupeKey(option.text) === dedupeKey)) {
       return { status: 'duplicate' };
     }
-    if (this.options.length >= input.maxOptions) {
-      return { status: 'full' };
-    }
     const option: Option = {
       id: `option-${this.#nextIdNumber}`,
-      text: input.text,
+      text,
       createdAt: new Date(BASE_TIME + this.#nextIdNumber * 1000).toISOString(),
     };
     this.#nextIdNumber += 1;
