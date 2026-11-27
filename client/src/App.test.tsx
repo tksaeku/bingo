@@ -12,7 +12,7 @@ vi.mock('./services/api', () => ({
 
 describe('App navigation', () => {
   describe('without a verified admin key', () => {
-    it('hides the Manage Cards link', () => {
+    it('shows Play and Leaderboard but no cards link', () => {
       localStorage.setItem('bingoBoard', createSavedBoardJson());
       renderWithProviders(<App />);
 
@@ -23,12 +23,12 @@ describe('App navigation', () => {
   });
 
   describe('with a verified admin key in sessionStorage', () => {
-    it('shows the Manage Cards link', () => {
+    it('still hides the cards link', () => {
       sessionStorage.setItem('bingoAdminKey', 'verified');
       localStorage.setItem('bingoBoard', createSavedBoardJson());
       renderWithProviders(<App />);
 
-      expect(screen.getByRole('link', { name: 'Manage Cards' })).toHaveAttribute('href', '/cards');
+      expect(screen.queryByRole('link', { name: 'Manage Cards' })).not.toBeInTheDocument();
     });
   });
 

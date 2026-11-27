@@ -3,7 +3,6 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
 import BingoBoard from './components/BingoBoard/BingoBoard';
 import Leaderboard from './components/Leaderboard/Leaderboard';
-import { useAdminKey } from './hooks/useAdminKey';
 import CardsPage from './pages/CardsPage/CardsPage';
 import { THE_OPEN_WEBSITE_URL } from './constants';
 import {
@@ -24,10 +23,8 @@ import {
 import { GlobalStyle } from './styles/GlobalStyle';
 import { theme } from './theme';
 
-/** App shell: header navigation, footer (admin link only with a verified key) and routes. Needs a Router ancestor. */
+/** App shell: header navigation, footer and routes. The admin cards page has no nav link; it is reached at /cards. Needs a Router ancestor. */
 const App = (): ReactElement => {
-  const { adminKey } = useAdminKey();
-
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyle />
@@ -52,7 +49,6 @@ const App = (): ReactElement => {
               <NavItem to="/" end>
                 Play
               </NavItem>
-              {adminKey !== null && <NavItem to="/cards">Manage Cards</NavItem>}
               <NavItem to="/leaderboard">Leaderboard</NavItem>
             </NavLinks>
           </HeaderContent>
