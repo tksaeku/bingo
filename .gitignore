@@ -141,3 +141,6 @@ server/serviceAccountKey.json
 
 # Source dirs must never hold compiled output
 server/src/**/*.js
+# Service account keys (any name, anywhere)
+*serviceAccount*.json
+*service-account*.json
