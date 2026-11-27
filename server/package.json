@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "seed": "tsx src/scripts/seed.ts",
-    "migrate:leaderboard": "tsx src/scripts/migrateLeaderboard.ts"
+    "migrate:leaderboard": "tsx src/scripts/migrateLeaderboard.ts",
+    "analytics:export": "tsx src/scripts/exportAnalytics.ts"
   },
   "dependencies": {
     "cors": "^2.8.6",

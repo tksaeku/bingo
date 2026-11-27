@@ -23,3 +23,8 @@ export function parseTrustedProxyHops(rawValue: string | undefined): number {
   const hops = Number(rawValue);
   return rawValue !== undefined && rawValue.trim() !== '' && Number.isInteger(hops) && hops >= 0 ? hops : DEFAULT_TRUSTED_PROXY_HOPS;
 }
+
+/** Analytics collection is on only when ANALYTICS_ENABLED is exactly the string 'true'. */
+export function parseAnalyticsEnabled(rawValue: string | undefined): boolean {
+  return rawValue === 'true';
+}

@@ -1,5 +1,6 @@
 import { Timestamp, type DocumentData, type FirestoreDataConverter, type QueryDocumentSnapshot } from 'firebase-admin/firestore';
-import type { LeaderboardEntry, Option } from '../types';
+import { ANALYTICS_DEVICE_TYPES } from '../constants';
+import type { AnalyticsBatchRecord, DeviceType, LeaderboardEntry, Option, StoredAnalyticsEvent } from '../types';
 
 /** Converts a stored Firestore value (Timestamp, Date, or ISO string) to an ISO string. */
 export function timestampToIso(value: unknown): string {
@@ -47,6 +48,42 @@ export const leaderboardConverter: FirestoreDataConverter<LeaderboardEntry> = {
       playerName: typeof data.playerName === 'string' ? data.playerName : '',
       wins: typeof data.wins === 'number' ? data.wins : 0,
       lastWin: timestampToIso(data.lastWin),
+    };
+  },
+};
+
+/** Maps raw analytics batch documents between Firestore (Timestamps) and ISO strings. */
+export const analyticsBatchConverter: FirestoreDataConverter<AnalyticsBatchRecord> = {
+  toFirestore(record: AnalyticsBatchRecord): DocumentData {
+    return {
+      visitorId: record.visitorId,
+      day: record.day,
+      receivedAt: isoToTimestamp(record.receivedAt),
+      deviceType: record.deviceType,
+      events: record.events.map((event) => ({
+        name: event.name,
+        ...(event.properties ? { properties: event.properties } : {}),
+        occurredAt: isoToTimestamp(event.occurredAt),
+      })),
+      expireAt: isoToTimestamp(record.expireAt),
+    };
+  },
+  fromFirestore(snapshot: QueryDocumentSnapshot): AnalyticsBatchRecord {
+    const data = snapshot.data();
+    const rawEvents: DocumentData[] = Array.isArray(data.events) ? data.events : [];
+    return {
+      visitorId: typeof data.visitorId === 'string' ? data.visitorId : '',
+      day: typeof data.day === 'string' ? data.day : '',
+      receivedAt: timestampToIso(data.receivedAt),
+      deviceType: ANALYTICS_DEVICE_TYPES.includes(data.deviceType) ? (data.deviceType as DeviceType) : 'desktop',
+      events: rawEvents.map(
+        (event): StoredAnalyticsEvent => ({
+          name: event.name,
+          ...(event.properties ? { properties: event.properties } : {}),
+          occurredAt: timestampToIso(event.occurredAt),
+        }),
+      ),
+      expireAt: timestampToIso(data.expireAt),
     };
   },
 };

@@ -15,10 +15,11 @@ describe('optionsService', () => {
       await expect(service.addOption('GOLD COSTUME')).rejects.toMatchObject({ status: 409 });
     });
 
-    it('rejects additions to a full pool with 422', async () => {
-      const texts = Array.from({ length: 200 }, (_unused, index) => `Option ${index}`);
+    it('accepts additions to a pool of any size', async () => {
+      const texts = Array.from({ length: 250 }, (_unused, index) => `Option ${index}`);
       const service = createOptionsService(new FakeOptionsRepository(texts));
-      await expect(service.addOption('One more')).rejects.toMatchObject({ status: 422 });
+      const option = await service.addOption('One more');
+      expect(option.text).toBe('One more');
     });
   });
 

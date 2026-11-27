@@ -36,10 +36,10 @@ Layered route → service → repository:
 
 - `index.ts` — entry point; loads env, calls `createApp()`, listens on `PORT`.
 - `app.ts` — `createApp()` factory: CORS allow-list, JSON body limit, rate limiting, feature routers, the built client (static files + SPA fallback via `middleware/serveClient.ts`, skipped when `client/dist` is missing), 404 + error middleware. Tests import this directly.
-- `features/<feature>/` — one folder per resource (`options`, `leaderboard`, `admin`): router assembler, one handler file per endpoint, a service holding business rules, Zod schemas, co-located `.test.ts` files.
+- `features/<feature>/` — one folder per resource (`options`, `leaderboard`, `admin`, `analytics`): router assembler, one handler file per endpoint, a service holding business rules, Zod schemas, co-located `.test.ts` files.
 - `repositories/` — the only code that touches Firestore (one class per PascalCase file). Typed converters map Firestore `Timestamp` → ISO strings.
 - `testSupport/` — in-memory fake repositories and `createTestApp` for supertest; excluded from the build.
-- `scripts/` — `seed.ts` and `migrateLeaderboard.ts` (dry run unless `--apply`).
+- `scripts/` — `seed.ts`, `migrateLeaderboard.ts` (dry run unless `--apply`) and `exportAnalytics.ts` (read-only JSON-lines export of raw analytics events).
 - `middleware/` — `requireAdminKey`, error handler, validation helper, rate limiters, `serveClient`.
 - `services/firestore.ts` — Admin SDK init from `FIREBASE_SERVICE_ACCOUNT_PATH` locally, otherwise Application Default Credentials (ambient on App Hosting). Honors `FIRESTORE_EMULATOR_HOST`.
 
@@ -49,7 +49,7 @@ Thin client — all rules that matter (validation, dedupe, win counting, auth) a
 
 - `components/<Name>/` — folder per component: `<Name>.tsx`, `<Name>.styles.ts` (styled-components), `<Name>.test.tsx`.
 - `pages/` — route-level components.
-- `hooks/` — data hooks (`useOptions`, `useLeaderboard`, `useAdminKey`) returning `{ data, loading, error, refetch }`.
+- `hooks/` — data hooks (`useOptions`, `useLeaderboard`, `useAdminKey`, `useAnalyticsSummary`) returning `{ data, loading, error, refetch }`.
 - `game/` — pure, framework-free game logic (board generation, win detection, saved-board validation).
 - `services/api.ts` — the only place that calls the HTTP API.
 - `types.ts`, `constants.ts`, `theme.ts` — shared types, constants and design tokens.
@@ -60,10 +60,11 @@ Thin client — all rules that matter (validation, dedupe, win counting, auth) a
 - Public URL: `https://bingo.wemove.dance` (custom domain on the App Hosting backend; DNS at DreamHost). The backend's own `*.hosted.app` URL is listed by `firebase apphosting:backends:list`.
 - `ADMIN_KEY` comes from the Secret Manager secret `bingo-admin-key`.
 - Firestore: `(default)` database in us-east4. `firestore.rules` denies all client access (only the Admin SDK on the server touches Firestore); deploy rules with `firebase deploy --only firestore:rules`. `firebase.json` also configures the Firestore emulator.
+- Analytics: the raw batches and visitor collections expire through a Firestore TTL policy on `expireAt`, enabled once per project with the three `gcloud firestore fields ttls update` commands in `.claude/specs/analytics/data-model.md`. Export raw events with `npm run analytics:export -w server -- --from YYYY-MM-DD --to YYYY-MM-DD [--out file.jsonl]` (refuses a real project without `--yes`). Turn collection off by setting `ANALYTICS_ENABLED` to `"false"` in `apphosting.yaml`.
 
 ## Environment
 
-- `server/.env` (see `server/.env.example`): `PORT`, `ADMIN_KEY`, `CORS_ORIGINS`, `TRUSTED_PROXY_HOPS`, `FIREBASE_SERVICE_ACCOUNT_PATH`, `FIRESTORE_EMULATOR_HOST`.
+- `server/.env` (see `server/.env.example`): `PORT`, `ADMIN_KEY`, `CORS_ORIGINS`, `TRUSTED_PROXY_HOPS`, `FIREBASE_SERVICE_ACCOUNT_PATH`, `FIRESTORE_EMULATOR_HOST`, `ANALYTICS_ENABLED` (collection is on only for the string `true`; set to `"true"` in `apphosting.yaml`).
 - `client/.env.development`: `VITE_API_URL` (the local API). Production builds leave it unset and use the same-origin `/api`.
 - The repo is **public** — never commit keys, `.env` files or `serviceAccountKey.json`.
 

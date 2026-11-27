@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { REQUIRED_OPTION_COUNT, WIN_MODAL_DELAY_MS } from '../constants';
 import { generateBoard, NotEnoughOptionsError } from '../game/board';
 import { getHasWon } from '../game/winLines';
+import { trackEvent } from '../services/analytics';
 import { optionsApi } from '../services/api';
 import { getErrorMessage } from '../services/apiErrors';
 import { clearSavedBoard, loadSavedBoard, saveBoard } from '../services/boardStorage';
@@ -12,6 +13,17 @@ const NOT_ENOUGH_OPTIONS_MESSAGE = `Need at least ${REQUIRED_OPTION_COUNT} optio
 
 /** Fallback message when the board cannot be loaded. */
 const LOAD_FAILED_MESSAGE = 'Failed to load bingo board.';
+
+/**
+ * Only the first Play page mount in a page load can be a restore: later mounts (e.g. navigating back
+ * from the leaderboard) reload the board this page load already started or restored.
+ */
+let hasMountedBoardThisPageLoad = false;
+
+/** Lets tests simulate a fresh page load for `board_restored` tracking. */
+export function resetBoardRestoreTracking(): void {
+  hasMountedBoardThisPageLoad = false;
+}
 
 /** State and actions exposed by useBingoBoard. */
 interface UseBingoBoardResult {
@@ -42,6 +54,19 @@ export function useBingoBoard(): UseBingoBoardResult {
   const [isWinModalOpen, setIsWinModalOpen] = useState(false);
   const [hasAutoOpenedWinModal, setHasAutoOpenedWinModal] = useState(false);
   const isGenerating = board === null && errorMessage === null;
+  const hasTrackedFirstMarkRef = useRef(
+    initialSavedBoard?.cells.some((cell) => !cell.isFree && cell.isMarked) ?? false,
+  );
+
+  useEffect(() => {
+    if (hasMountedBoardThisPageLoad) {
+      return;
+    }
+    hasMountedBoardThisPageLoad = true;
+    if (initialSavedBoard !== null) {
+      trackEvent({ name: 'board_restored' });
+    }
+  }, [initialSavedBoard]);
 
   useEffect(() => {
     if (!isGenerating) {
@@ -57,6 +82,7 @@ export function useBingoBoard(): UseBingoBoardResult {
         }
         const newBoard = generateBoard(options);
         saveBoard(newBoard, false);
+        trackEvent({ name: 'board_started' });
         setBoard(newBoard);
         setIsScoreSubmitted(false);
       } catch (error) {
@@ -97,6 +123,10 @@ export function useBingoBoard(): UseBingoBoardResult {
       );
       saveBoard(nextBoard, isScoreSubmitted);
       setBoard(nextBoard);
+      if (!cell.isMarked && !hasTrackedFirstMarkRef.current) {
+        hasTrackedFirstMarkRef.current = true;
+        trackEvent({ name: 'first_mark' });
+      }
       const hasWonNow = getHasWon(nextBoard);
       if (!hasWonNow) {
         setIsWinPending(false);
@@ -105,6 +135,7 @@ export function useBingoBoard(): UseBingoBoardResult {
       if (!getHasWon(board) && !hasAutoOpenedWinModal) {
         setHasAutoOpenedWinModal(true);
         setIsWinPending(true);
+        trackEvent({ name: 'bingo' });
       }
     },
     [board, isScoreSubmitted, hasAutoOpenedWinModal],
@@ -112,6 +143,7 @@ export function useBingoBoard(): UseBingoBoardResult {
 
   const startNewBoard = useCallback((): void => {
     clearSavedBoard();
+    hasTrackedFirstMarkRef.current = false;
     setBoard(null);
     setErrorMessage(null);
     setIsWinPending(false);

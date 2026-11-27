@@ -39,3 +39,21 @@ export const CONFETTI_PIECE_COUNT = 50;
 
 /** The Open World Swing Dance Championships public website. */
 export const THE_OPEN_WEBSITE_URL = 'https://theopenswing.com';
+
+/** localStorage key holding the anonymous analytics visitor ID. */
+export const VISITOR_ID_STORAGE_KEY = 'bingoVisitorId';
+
+/** How long queued analytics events wait before being sent. */
+export const ANALYTICS_FLUSH_INTERVAL_MS = 10_000;
+
+/** Number of analytics events that triggers an immediate send, and the most one request carries. */
+export const ANALYTICS_MAX_BATCH_SIZE = 20;
+
+/** Most analytics events held in the queue; the oldest are dropped beyond this. */
+export const ANALYTICS_MAX_QUEUE_SIZE = 100;
+
+/** Largest `offsetMs` the server accepts. */
+export const ANALYTICS_MAX_OFFSET_MS = 300_000;
+
+/** How often the stats dashboard refreshes itself. */
+export const ANALYTICS_SUMMARY_REFRESH_INTERVAL_MS = 60_000;

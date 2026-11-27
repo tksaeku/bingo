@@ -40,11 +40,13 @@ Base path `/api`. All bodies are JSON. All errors are `{ "error": string }` (plu
 |---|---|---|---|---|
 | `GET /api/health` | — | — | `200 { "status": "ok" }` | — |
 | `GET /api/options` | — | — | `200 Option[]` ordered by `createdAt` asc | 500 |
-| `POST /api/options` | admin | `{ "text": string }` 1–100 chars trimmed | `201 Option` | 400 invalid, 401, 409 duplicate, 422 pool full (200 options), 429, 503 admin key not configured |
+| `POST /api/options` | admin | `{ "text": string }` 1–100 chars trimmed | `201 Option` | 400 invalid, 401, 409 duplicate, 429, 503 admin key not configured |
 | `DELETE /api/options/:id` | admin | — | `204` | 400 bad id, 401, 404, 429, 503 |
 | `GET /api/admin/verify` | admin | — | `204` | 401, 503 |
 | `GET /api/leaderboard` | — | — | `200 LeaderboardEntry[]` (max 20, order per AC-L1) | 500 |
 | `POST /api/leaderboard` | — | `{ "playerName": string }` 1–20 chars after normalization | `200 LeaderboardEntry` (updated entry) | 400, 429 |
+| `POST /api/analytics/events` | — | `EventBatch` (see analytics `api.md`) | `204` (stored, or dropped as a bot) | 400 invalid, 410 collection off, 413, 429, 500 |
+| `GET /api/admin/analytics?days=1\|7\|30` | admin | — | `200 AnalyticsSummary` | 400 bad `days`, 401, 429, 503 admin key not configured, 500 |
 
 - **Option** — `id` (string), `text` (string), `createdAt` (ISO string).
 - **LeaderboardEntry** — `id` (string), `playerName` (string), `wins` (number), `lastWin` (ISO string).
@@ -66,6 +68,14 @@ The client mirrors these in `client/src/types.ts`; the server defines them in `s
 ### Data
 
 Firestore collections `options` (`text`, `createdAt`) and `leaderboard` (`playerName`, `wins`, `lastWin`). Existing leaderboard documents with random IDs are re-keyed to normalized-name IDs by `server/src/scripts/migrateLeaderboard.ts` (merges duplicates by summing wins and keeping the latest `lastWin`); it defaults to a dry run.
+
+Analytics collections: `analyticsEventBatches` (raw event batches), `analyticsDays/{day}/shards/{0–9}` (sharded daily totals, kept), `analyticsVisitorDays` (per-visitor daily funnel state) and `analyticsVisitors` (range-unique visitors). The raw batches and both visitor collections carry `expireAt` and expire by TTL after 30 days. See the analytics `data-model.md`.
+
+## Analytics
+
+First-party, anonymous usage analytics: the client batches a fixed set of events (page views, board started/restored, first mark, bingo, score submitted, play again, outbound clicks) under a random `localStorage` visitor ID and sends them to `POST /api/analytics/events`. Nothing is sent when Global Privacy Control is on. The server drops bot user agents, rate-limits per IP and per visitor, caps each visitor at 500 events per `America/Los_Angeles` day, and stores no IPs, cookies or player names. Collection is on only when `ANALYTICS_ENABLED=true`; otherwise the endpoint returns `410` and clients stop sending for the session. Admins see the results at `/stats`, which has no nav link and sits behind the same admin key as `/cards` (a key verified on either page unlocks both for the browser session).
+
+The full contract and the acceptance criteria `AC-A1`–`AC-A19` live in [`../specs/analytics/`](../specs/analytics/README.md) (`requirements.md`, `api.md`, `data-model.md`, `abuse-and-privacy.md`, `client.md`).
 
 ### Known limitation
 

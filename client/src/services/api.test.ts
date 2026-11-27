@@ -82,3 +82,42 @@ describe('adminApi', () => {
     expect(mocks.client.get).toHaveBeenCalledWith('/admin/verify', { headers: { 'x-admin-key': 'secret' }, signal });
   });
 });
+
+describe('analyticsApi', () => {
+  const batch = { visitorId: 'id', events: [{ name: 'bingo' as const, offsetMs: 5 }] };
+
+  it('posts a batch through axios and resolves with the status', async () => {
+    mocks.client.post.mockResolvedValue({ status: 410 });
+
+    await expect(api.analyticsApi.sendEvents(batch, { keepalive: false })).resolves.toBe(410);
+    expect(mocks.client.post).toHaveBeenCalledWith('/analytics/events', batch, {
+      validateStatus: expect.any(Function),
+    });
+  });
+
+  it('posts a keepalive batch with fetch', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ status: 204 });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(api.analyticsApi.sendEvents(batch, { keepalive: true })).resolves.toBe(204);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringMatching(/\/api\/analytics\/events$/),
+      expect.objectContaining({ method: 'POST', keepalive: true, body: JSON.stringify(batch) }),
+    );
+    vi.unstubAllGlobals();
+  });
+
+  it('gets the summary with the admin key and days', async () => {
+    const signal = new AbortController().signal;
+    mocks.client.get.mockResolvedValue({ data: { uniqueVisitors: 3 } });
+
+    await expect(api.analyticsApi.getSummary('secret', 7, signal)).resolves.toEqual({
+      uniqueVisitors: 3,
+    });
+    expect(mocks.client.get).toHaveBeenCalledWith('/admin/analytics', {
+      headers: { 'x-admin-key': 'secret' },
+      params: { days: 7 },
+      signal,
+    });
+  });
+});

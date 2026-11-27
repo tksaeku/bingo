@@ -1,4 +1,4 @@
-import { Timestamp, type DocumentData } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp, type DocumentData } from 'firebase-admin/firestore';
 
 type RawDocuments = Map<string, DocumentData>;
 
@@ -12,6 +12,18 @@ function toComparable(value: unknown): number | string {
     return value.toMillis();
   }
   return typeof value === 'number' ? value : String(value);
+}
+
+function matchesFilter(actual: unknown, filter: QueryFilter): boolean {
+  if (actual === undefined) {
+    return false;
+  }
+  const left = toComparable(actual);
+  const right = toComparable(filter.value);
+  if (filter.operator === '>=') {
+    return left >= right;
+  }
+  return filter.operator === '<=' ? left <= right : left === right;
 }
 
 /** Document snapshot returned by reads; `data()` applies the collection's converter. */
@@ -41,13 +53,20 @@ export class FakeDocumentSnapshot {
 /** Reference to one document within a fake collection. */
 export class FakeDocumentReference {
   readonly id: string;
-  readonly collection: FakeCollectionReference;
+  readonly parentCollection: FakeCollectionReference;
 
   constructor(collection: FakeCollectionReference, id: string) {
     this.id = id;
-    this.collection = collection;
+    this.parentCollection = collection;
+  }
+
+  /** Subcollection of this document, stored under the full path `parent/id/name`. */
+  collection(name: string): FakeCollectionReference {
+    return new FakeCollectionReference(this.parentCollection.database, `${this.parentCollection.name}/${this.id}/${name}`);
   }
 }
+
+type QueryFilter = { field: string; operator: '>=' | '<=' | '=='; value: unknown };
 
 /** Query over a fake collection supporting orderBy, limit and get. */
 export class FakeQuery {
@@ -55,20 +74,43 @@ export class FakeQuery {
   readonly #orderField: string | undefined;
   readonly #direction: 'asc' | 'desc';
   readonly #limitCount: number | undefined;
+  readonly #filters: readonly QueryFilter[];
 
-  constructor(collection: FakeCollectionReference, orderField?: string, direction: 'asc' | 'desc' = 'asc', limitCount?: number) {
+  constructor(
+    collection: FakeCollectionReference,
+    orderField?: string,
+    direction: 'asc' | 'desc' = 'asc',
+    limitCount?: number,
+    filters: readonly QueryFilter[] = [],
+  ) {
     this.collection = collection;
     this.#orderField = orderField;
     this.#direction = direction;
     this.#limitCount = limitCount;
+    this.#filters = filters;
   }
 
   orderBy(field: string, direction: 'asc' | 'desc' = 'asc'): FakeQuery {
-    return new FakeQuery(this.collection, field, direction, this.#limitCount);
+    return new FakeQuery(this.collection, field, direction, this.#limitCount, this.#filters);
   }
 
   limit(count: number): FakeQuery {
-    return new FakeQuery(this.collection, this.#orderField, this.#direction, count);
+    return new FakeQuery(this.collection, this.#orderField, this.#direction, count, this.#filters);
+  }
+
+  where(field: string, operator: QueryFilter['operator'], value: unknown): FakeQuery {
+    return new FakeQuery(this.collection, this.#orderField, this.#direction, this.#limitCount, [...this.#filters, { field, operator, value }]);
+  }
+
+  /** Aggregation count, recorded as one read. */
+  count(): { get: () => Promise<{ data: () => { count: number } }> } {
+    return {
+      get: async (): Promise<{ data: () => { count: number } }> => {
+        this.collection.database.log.push('count');
+        const { size } = this.execute();
+        return { data: (): { count: number } => ({ count: size }) };
+      },
+    };
   }
 
   /** Resolves the query without a transaction (recorded as a non-transactional read). */
@@ -79,9 +121,9 @@ export class FakeQuery {
 
   execute(): { docs: FakeDocumentSnapshot[]; size: number } {
     const field = this.#orderField;
-    let docs = [...this.collection.rawDocuments.entries()].map(
-      ([id, raw]) => new FakeDocumentSnapshot(new FakeDocumentReference(this.collection, id), raw, this.collection.converter),
-    );
+    let docs = [...this.collection.rawDocuments.entries()]
+      .filter(([, raw]) => this.#filters.every((filter) => matchesFilter(raw[filter.field], filter)))
+      .map(([id, raw]) => new FakeDocumentSnapshot(new FakeDocumentReference(this.collection, id), raw, this.collection.converter));
     if (field !== undefined) {
       const sign = this.#direction === 'desc' ? -1 : 1;
       const rawOf = (snapshot: FakeDocumentSnapshot): unknown => this.collection.rawDocuments.get(snapshot.id)?.[field];
@@ -131,21 +173,57 @@ export class FakeCollectionReference extends FakeQuery {
     return new FakeQuery(this, undefined, 'asc', count);
   }
 
+  override where(field: string, operator: QueryFilter['operator'], value: unknown): FakeQuery {
+    return new FakeQuery(this).where(field, operator, value);
+  }
+
+  override count(): ReturnType<FakeQuery['count']> {
+    return new FakeQuery(this).count();
+  }
+
   override async get(): Promise<{ docs: FakeDocumentSnapshot[]; size: number }> {
     this.database.log.push('read');
     return new FakeQuery(this).execute();
   }
 }
 
-type PendingWrite = { kind: 'set'; ref: FakeDocumentReference; value: unknown } | { kind: 'delete'; ref: FakeDocumentReference };
+type SetOptions = { merge?: boolean };
+
+type PendingWrite =
+  | { kind: 'set'; ref: FakeDocumentReference; value: unknown; options?: SetOptions }
+  | { kind: 'delete'; ref: FakeDocumentReference };
+
+function getIsPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && Object.getPrototypeOf(value) === Object.prototype;
+}
+
+/** Merges `incoming` into `existing` field by field, applying FieldValue.increment sentinels. */
+function mergeDocument(existing: Record<string, unknown>, incoming: Record<string, unknown>): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...existing };
+  Object.entries(incoming).forEach(([key, value]) => {
+    if (value instanceof FieldValue && 'operand' in value) {
+      const current = typeof merged[key] === 'number' ? (merged[key] as number) : 0;
+      merged[key] = current + (value.operand as number);
+    } else if (getIsPlainObject(value)) {
+      merged[key] = mergeDocument(getIsPlainObject(merged[key]) ? merged[key] : {}, value);
+    } else {
+      merged[key] = value;
+    }
+  });
+  return merged;
+}
 
 function applyWrite(write: PendingWrite): void {
-  const documents = write.ref.collection.rawDocuments;
+  const documents = write.ref.parentCollection.rawDocuments;
   if (write.kind === 'delete') {
     documents.delete(write.ref.id);
     return;
   }
-  const converter = write.ref.collection.converter;
+  if (write.options?.merge) {
+    documents.set(write.ref.id, mergeDocument(documents.get(write.ref.id) ?? {}, write.value as Record<string, unknown>) as DocumentData);
+    return;
+  }
+  const converter = write.ref.parentCollection.converter;
   documents.set(write.ref.id, converter ? converter.toFirestore(write.value) : (write.value as DocumentData));
 }
 
@@ -164,14 +242,14 @@ export class FakeTransaction {
     }
     this.#database.log.push('tx:get');
     if (target instanceof FakeDocumentReference) {
-      return new FakeDocumentSnapshot(target, target.collection.rawDocuments.get(target.id), target.collection.converter);
+      return new FakeDocumentSnapshot(target, target.parentCollection.rawDocuments.get(target.id), target.parentCollection.converter);
     }
     return target instanceof FakeCollectionReference ? new FakeQuery(target).execute() : target.execute();
   }
 
-  set(ref: FakeDocumentReference, value: unknown): this {
+  set(ref: FakeDocumentReference, value: unknown, options?: SetOptions): this {
     this.#database.log.push('tx:set');
-    this.#writes.push({ kind: 'set', ref, value });
+    this.#writes.push({ kind: 'set', ref, value, options });
     return this;
   }
 
@@ -195,8 +273,8 @@ export class FakeWriteBatch {
     this.#database = database;
   }
 
-  set(ref: FakeDocumentReference, value: unknown): this {
-    this.#writes.push({ kind: 'set', ref, value });
+  set(ref: FakeDocumentReference, value: unknown, options?: SetOptions): this {
+    this.#writes.push({ kind: 'set', ref, value, options });
     return this;
   }
 
@@ -239,6 +317,12 @@ export class FakeFirestore {
 
   collection(name: string): FakeCollectionReference {
     return new FakeCollectionReference(this, name);
+  }
+
+  /** Reads many documents in one round trip; missing documents come back with `exists` false. */
+  async getAll(...refs: FakeDocumentReference[]): Promise<FakeDocumentSnapshot[]> {
+    this.log.push('getAll');
+    return refs.map((ref) => new FakeDocumentSnapshot(ref, ref.parentCollection.rawDocuments.get(ref.id), ref.parentCollection.converter));
   }
 
   batch(): FakeWriteBatch {

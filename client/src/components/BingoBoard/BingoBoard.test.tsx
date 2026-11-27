@@ -2,6 +2,8 @@ import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WIN_MODAL_DELAY_MS } from '../../constants';
+import { resetBoardRestoreTracking } from '../../hooks/useBingoBoard';
+import { trackEvent } from '../../services/analytics';
 import { leaderboardApi, optionsApi } from '../../services/api';
 import { createAxiosError } from '../../test/axiosErrors';
 import type { SavedBoard } from '../../types';
@@ -14,6 +16,8 @@ vi.mock('../../services/api', () => ({
   leaderboardApi: { getAll: vi.fn(), submitWin: vi.fn() },
   adminApi: { verify: vi.fn() },
 }));
+
+vi.mock('../../services/analytics', () => ({ trackEvent: vi.fn() }));
 
 const ALMOST_WON_ROW = [0, 1, 2, 3];
 
@@ -276,6 +280,136 @@ describe('BingoBoard', () => {
       await userEvent.click(await screen.findByRole('button', { name: 'New Board' }));
       expect(await screen.findAllByRole('button', { name: /Option \d+/ })).toHaveLength(24);
       expect(screen.getByRole('heading', { name: 'Your Bingo Board' })).toHaveFocus();
+    });
+  });
+  describe('analytics events', () => {
+    const getTrackedNames = (): string[] => vi.mocked(trackEvent).mock.calls.map(([event]) => event.name);
+
+    it('tracks board_restored, and no board_started, for a saved board', async () => {
+      resetBoardRestoreTracking();
+      vi.mocked(trackEvent).mockClear();
+      localStorage.setItem('bingoBoard', createSavedBoardJson());
+      renderWithProviders(<BingoBoard />);
+      await screen.findByRole('button', { name: 'FREE' });
+
+      expect(getTrackedNames()).toEqual(['board_restored']);
+    });
+
+    it('tracks board_restored only once per page load when the Play page remounts', async () => {
+      resetBoardRestoreTracking();
+      vi.mocked(trackEvent).mockClear();
+      localStorage.setItem('bingoBoard', createSavedBoardJson());
+      const { unmount } = renderWithProviders(<BingoBoard />);
+      await screen.findByRole('button', { name: 'FREE' });
+      unmount();
+
+      renderWithProviders(<BingoBoard />);
+      await screen.findByRole('button', { name: 'FREE' });
+
+      expect(getTrackedNames()).toEqual(['board_restored']);
+    });
+
+    it('does not track board_restored when returning to a board started earlier in the page load', async () => {
+      resetBoardRestoreTracking();
+      vi.mocked(trackEvent).mockClear();
+      vi.mocked(optionsApi.getAll).mockResolvedValue(createOptions(30));
+      const { unmount } = renderWithProviders(<BingoBoard />);
+      expect(await screen.findAllByRole('button', { name: /Option \d+/ })).toHaveLength(24);
+      unmount();
+
+      renderWithProviders(<BingoBoard />);
+      expect(await screen.findAllByRole('button', { name: /Option \d+/ })).toHaveLength(24);
+
+      expect(getTrackedNames()).toEqual(['board_started']);
+    });
+
+    it('tracks board_started when a new board is generated', async () => {
+      vi.mocked(trackEvent).mockClear();
+      vi.mocked(optionsApi.getAll).mockResolvedValue(createOptions(30));
+      renderWithProviders(<BingoBoard />);
+      await screen.findAllByRole('button', { name: /Option \d+/ });
+
+      expect(getTrackedNames()).toEqual(['board_started']);
+    });
+
+    it('tracks first_mark once per board, even after unmarking and re-marking', async () => {
+      vi.mocked(trackEvent).mockClear();
+      localStorage.setItem('bingoBoard', createSavedBoardJson());
+      renderWithProviders(<BingoBoard />);
+      const cell = await screen.findByRole('button', { name: 'Cell 7' });
+
+      await userEvent.click(cell);
+      await userEvent.click(cell);
+      await userEvent.click(cell);
+      await userEvent.click(screen.getByRole('button', { name: 'Cell 8' }));
+
+      expect(getTrackedNames().filter((name) => name === 'first_mark')).toHaveLength(1);
+    });
+
+    it('does not track first_mark for a restored board that already has a mark', async () => {
+      vi.mocked(trackEvent).mockClear();
+      localStorage.setItem('bingoBoard', createSavedBoardJson([3]));
+      renderWithProviders(<BingoBoard />);
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Cell 7' }));
+
+      expect(getTrackedNames()).not.toContain('first_mark');
+    });
+
+    it('tracks bingo once when the winning line completes', async () => {
+      vi.mocked(trackEvent).mockClear();
+      localStorage.setItem('bingoBoard', createSavedBoardJson(ALMOST_WON_ROW));
+      renderWithProviders(<BingoBoard />);
+
+      const winningCell = await screen.findByRole('button', { name: 'Cell 4' });
+      await userEvent.click(winningCell);
+      await userEvent.click(winningCell);
+      await userEvent.click(winningCell);
+
+      expect(getTrackedNames().filter((name) => name === 'bingo')).toHaveLength(1);
+    });
+
+    it('does not track bingo for a restored board that is already won', async () => {
+      vi.mocked(trackEvent).mockClear();
+      localStorage.setItem('bingoBoard', createSavedBoardJson([0, 1, 2, 3, 4]));
+      renderWithProviders(<BingoBoard />);
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Cell 20' }));
+
+      expect(getTrackedNames()).not.toContain('bingo');
+    });
+
+    it('tracks score_submitted only after the submit succeeds', async () => {
+      vi.mocked(trackEvent).mockClear();
+      localStorage.setItem('bingoBoard', createSavedBoardJson(ALMOST_WON_ROW));
+      vi.mocked(leaderboardApi.submitWin).mockRejectedValueOnce(createAxiosError(500, 'nope'));
+      vi.mocked(leaderboardApi.submitWin).mockResolvedValueOnce(createLeaderboardEntries(1)[0]);
+      renderWithProviders(<BingoBoard />);
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Cell 4' }));
+      await screen.findByRole('dialog', {}, { timeout: 2000 });
+      await userEvent.type(screen.getByLabelText('Your name'), 'Bob{Enter}');
+      await screen.findByRole('alert');
+      expect(getTrackedNames()).not.toContain('score_submitted');
+
+      await userEvent.keyboard('{Enter}');
+      await vi.waitFor(() => expect(getTrackedNames()).toContain('score_submitted'));
+    });
+
+    it('tracks play_again before the board_started of the new board', async () => {
+      vi.mocked(trackEvent).mockClear();
+      localStorage.setItem('bingoBoard', createSavedBoardJson(ALMOST_WON_ROW));
+      vi.mocked(optionsApi.getAll).mockResolvedValue(createOptions(30));
+      vi.mocked(leaderboardApi.submitWin).mockResolvedValue(createLeaderboardEntries(1)[0]);
+      renderWithProviders(<BingoBoard />);
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Cell 4' }));
+      await screen.findByRole('dialog', {}, { timeout: 2000 });
+      await userEvent.type(screen.getByLabelText('Your name'), 'Bob{Enter}');
+      await userEvent.click(await screen.findByRole('button', { name: 'Play Again' }));
+      await screen.findAllByRole('button', { name: /Option \d+/ });
+
+      expect(getTrackedNames().slice(-2)).toEqual(['play_again', 'board_started']);
     });
   });
 });

@@ -3,7 +3,10 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
 import BingoBoard from './components/BingoBoard/BingoBoard';
 import Leaderboard from './components/Leaderboard/Leaderboard';
+import { usePageViewTracking } from './hooks/usePageViewTracking';
 import CardsPage from './pages/CardsPage/CardsPage';
+import StatsPage from './pages/StatsPage/StatsPage';
+import { trackEvent } from './services/analytics';
 import { THE_OPEN_WEBSITE_URL } from './constants';
 import {
   Brand,
@@ -23,8 +26,10 @@ import {
 import { GlobalStyle } from './styles/GlobalStyle';
 import { theme } from './theme';
 
-/** App shell: header navigation, footer and routes. The admin cards page has no nav link; it is reached at /cards. Needs a Router ancestor. */
+/** App shell: header navigation, footer and routes. The admin pages have no nav links: they are reached at /cards and /stats, both behind the admin key. Needs a Router ancestor. */
 const App = (): ReactElement => {
+  usePageViewTracking();
+
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyle />
@@ -43,7 +48,12 @@ const App = (): ReactElement => {
               </BrandTagline>
             </Brand>
             <NavLinks aria-label="Main">
-              <ExternalLink href={THE_OPEN_WEBSITE_URL} target="_blank" rel="noopener noreferrer">
+              <ExternalLink
+                href={THE_OPEN_WEBSITE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackEvent({ name: 'outbound_click', properties: { placement: 'header' } })}
+              >
                 Visit The Open website
               </ExternalLink>
               <NavItem to="/" end>
@@ -60,13 +70,19 @@ const App = (): ReactElement => {
             <Route path="/cards" element={<CardsPage />} />
             <Route path="/options" element={<Navigate to="/cards" replace />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/stats" element={<StatsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Main>
 
         <Footer>
           <span>The Open · World Swing Dance Championships · Made for the moments we share</span>
-          <FooterLink href={THE_OPEN_WEBSITE_URL} target="_blank" rel="noopener noreferrer">
+          <FooterLink
+            href={THE_OPEN_WEBSITE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackEvent({ name: 'outbound_click', properties: { placement: 'footer' } })}
+          >
             Visit The Open website
           </FooterLink>
         </Footer>
