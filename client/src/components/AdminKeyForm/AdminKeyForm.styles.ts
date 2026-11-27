@@ -1,9 +1,11 @@
 import styled from 'styled-components';
 import { Card } from '../../styles/Card';
 
-/** Narrow card for the single-field unlock form. */
+/** Narrow card for the single-field unlock form, centered horizontally on the page. */
 export const KeyCard = styled(Card)`
+  width: 100%;
   max-width: 520px;
+  margin-inline: auto;
 `;
 
 /** Stacked form fields and actions. */
