@@ -1,163 +1,71 @@
-# 🎯 Bingo Game Application
+# 🎯 Bingo
 
-A full-stack bingo game built with Node.js, TypeScript, React, SCSS, and MongoDB.
+A casual 5×5 bingo game. Mark cells on a randomly generated board, submit your name when you win, and climb the shared leaderboard. An admin manages the pool of bingo options.
 
 ## Features
 
-- **Interactive Bingo Board**: 5x5 grid with clickable cells and automatic win detection
-- **Options Management**: Add and remove custom bingo options
-- **Leaderboard**: Track winners and their win counts
-- **Win Celebration**: Confetti animation and player name submission
-- **Play Again**: Instantly generate a new board after winning
+- **Bingo board** — 5×5 grid with a free center cell, randomly drawn from the option pool, saved across reloads, with automatic win detection on rows, columns and diagonals
+- **Win celebration** — confetti, name submission and a fresh board to play again
+- **Leaderboard** — top 20 players by wins, auto-refreshing
+- **Option management** — admin-only page, unlocked with the admin key
 
-## Tech Stack
+## Tech stack
 
-### Backend
-- Node.js + Express
-- TypeScript
-- Firestore (Firebase) — replaces MongoDB/Mongoose
-- CORS enabled
+- **Client** — React 19, TypeScript, Vite, React Router, styled-components, axios
+- **Server** — Node 24, Express 5, TypeScript, Firestore (Firebase Admin SDK), Zod
+- **Testing** — Vitest, Testing Library, supertest
 
-### Frontend
-- React 19 + TypeScript
-- Vite
-- React Router for navigation
-- SCSS for styling
-- Axios for API calls
+## Getting started
 
-## Prerequisites
+Prerequisites: Node 24+, and access to a Firebase project with Firestore (or the Firestore emulator).
 
-- Node.js (v18 or higher)
-- A Firebase project with Firestore enabled and a service account JSON
-- npm or yarn
-
-## Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd bingo
-   ```
-
-2. **Install root dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Install server dependencies**
-   ```bash
-   cd server
-   npm install
-   cd ..
-   ```
-
-4. **Install client dependencies**
-   ```bash
-   cd client
-   npm install
-   cd ..
-   ```
-
-5. **Configure environment variables**
-
-   The server now uses Firestore instead of MongoDB. You must provide Firebase credentials to the server in one of two ways:
-
-   Option A (recommended): set `GOOGLE_APPLICATION_CREDENTIALS` to the path of your service account JSON file.
-
-   Option B: set `FIREBASE_SERVICE_ACCOUNT` to the base64-encoded contents of your service account JSON (useful for CI).
-
-   Example `server/.env` (you can copy `server/.env.example`):
-   ```
-   PORT=5174
-   NODE_ENV=development
-   # Option A (use one of these):
-   # GOOGLE_APPLICATION_CREDENTIALS=/path/to/serviceAccount.json
-   # Option B (alternative):
-   # FIREBASE_SERVICE_ACCOUNT=<base64-encoded-service-account-json>
-   ```
-
-## Running the Application
-
-### Firestore credentials
-
-Before starting the server ensure Firestore credentials are available via `GOOGLE_APPLICATION_CREDENTIALS` or `FIREBASE_SERVICE_ACCOUNT` (see `server/.env.example`).
-
-### Option 1: Run both server and client together
-
-From the root directory:
 ```bash
+npm install
+cp server/.env.example server/.env   # then fill in ADMIN_KEY and credentials
 npm run dev
 ```
 
-This will start:
-- Backend server on http://localhost:5174
-- Frontend client on http://localhost:5173
+This starts the API on http://localhost:5174 and the client on http://localhost:5173.
 
-### Option 2: Run server and client separately
+### Server environment (`server/.env`)
 
-**Terminal 1 - Start the server:**
-```bash
-npm run dev:server
-```
+| Variable | Purpose |
+|---|---|
+| `PORT` | API port (default `5174`) |
+| `ADMIN_KEY` | Shared secret required to add or delete options. Admin endpoints are disabled when unset. |
+| `CORS_ORIGINS` | Comma-separated cross-origin allow-list (default `http://localhost:5173`; production is same-origin) |
+| `FIREBASE_SERVICE_ACCOUNT_PATH` | Path to a service-account JSON for local development (overrides any machine-wide `GOOGLE_APPLICATION_CREDENTIALS`) |
+| `FIRESTORE_EMULATOR_HOST` | Set (e.g. `localhost:8080`) to use the Firestore emulator instead of a real project |
 
-**Terminal 2 - Start the client:**
-```bash
-npm run dev:client
-```
+### Client environment
 
-## Usage
+`client/.env.development` sets `VITE_API_URL` to the local API (`http://localhost:5174/api`). Production builds leave it unset and call the same-origin `/api`.
 
-1. **Add Options**: Navigate to "Manage Options" and add at least 24 bingo options
-2. **Play**: Go to "Play" to see your bingo board
-3. **Mark Cells**: Click cells to mark them
-4. **Win**: Complete a row, column, or diagonal to win
-5. **Submit Score**: Enter your name and play again
-6. **View Leaderboard**: Check the "Leaderboard" to see top players
+## Scripts
 
-## Project Structure
+| Command | What it does |
+|---|---|
+| `npm run dev` | Run server and client in watch mode |
+| `npm run build` | Build server and client |
+| `npm start` | Run the built server |
+| `npm run check` | Typecheck, lint and test both packages (the CI gate) |
+| `npm test` | Run all tests |
+| `npm run format` | Format with Prettier |
+| `npm run seed -w server` | Seed default options (emulator, or pass `--yes`) |
 
-```
-bingo/
-├── server/               # Backend API
-│   ├── src/
-│   │   ├── models/      # Firestore-backed data access
-│   │   ├── routes/      # Express routes
-│   │   └── index.ts     # Server entry point
-│   ├── .env.example     # Environment variable examples for Firestore
-   │   └── package.json
-├── client/              # Frontend React app
-│   ├── src/
-│   │   ├── components/  # React components
-│   │   ├── services/    # API service
-│   │   ├── App.tsx      # Main app with routing
-│   │   └── main.tsx     # Entry point
-│   └── package.json
-└── package.json         # Root workspace config
-```
+## Playing
 
-## API Endpoints
+1. An admin opens `/options`, enters the admin key and adds at least 24 options.
+2. Players open **Play**, click cells to mark them, and complete a row, column or diagonal to win.
+3. Winners enter their name and appear on the **Leaderboard**.
 
-### Options
-- `GET /api/options` - Get all options
-- `POST /api/options` - Create new option
-- `DELETE /api/options/:id` - Delete option
+## Deployment
 
-### Leaderboard
-- `GET /api/leaderboard` - Get leaderboard (top 20)
-- `POST /api/leaderboard` - Submit a win
+- The app runs on Firebase App Hosting (backend `bingo`) at https://bingo.wemove.dance, built from `main` with `apphosting.yaml`. One Express server serves both the API and the client build, so every rollout ships them together.
+- `ADMIN_KEY` is read from the Secret Manager secret `bingo-admin-key`.
 
-## Building for Production
-
-```bash
-npm run build
-```
-
-To start the production server:
-```bash
-npm start
-```
+See [`CLAUDE.md`](CLAUDE.md) for architecture and [`.claude/docs/spec.md`](.claude/docs/spec.md) for the full API contract.
 
 ## License
 
-See LICENSE file for details.
-Bingo app!
+GPL-3.0 — see [LICENSE](LICENSE).
