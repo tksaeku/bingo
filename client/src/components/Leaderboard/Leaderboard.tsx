@@ -1,18 +1,52 @@
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { useLeaderboard } from '../../hooks/useLeaderboard';
 import { Button } from '../../styles/Button';
-import { EmptyMessage, ErrorMessage, LoadingMessage, Panel } from '../../styles/Panel';
-import { Actions, NameCell, RankCell, Row, Table, Title, WinsCell } from './Leaderboard.styles';
+import { ErrorMessage } from '../../styles/Panel';
+import { Eyebrow, Hero, HeroLead, HeroTitle, HeroTitleAccent, Page } from '../../styles/PageHero';
+import {
+  Card,
+  CardHeader,
+  CardSubtitle,
+  CardTitle,
+  EmptyCallout,
+  EmptyText,
+  EmptyTitle,
+  HeaderRow,
+  LoadingText,
+  NameCell,
+  RankCell,
+  Row,
+  Table,
+  WinsCell,
+  WinsHeader,
+} from './Leaderboard.styles';
 
-/** Medal emoji for ranks 1 to 3. */
-const MEDALS = ['🥇', '🥈', '🥉'];
 /** Number of highlighted top ranks. */
-const TOP_THREE_COUNT = MEDALS.length;
+const TOP_THREE_COUNT = 3;
 
-/** Returns the medal for the top three ranks and `#n` afterwards. */
-function getRankLabel(index: number): string {
-  return index < TOP_THREE_COUNT ? MEDALS[index] : `#${index + 1}`;
+/** Formats a zero-based index as a two-digit rank ("01", "02", ...). */
+function formatRank(index: number): string {
+  return String(index + 1).padStart(2, '0');
 }
+
+interface LeaderboardPageProps {
+  children: ReactNode;
+}
+
+/** Hero plus the card frame shared by the loading and loaded states. */
+const LeaderboardPage = ({ children }: LeaderboardPageProps): ReactElement => (
+  <Page>
+    <Hero>
+      <Eyebrow>Hall of fame</Eyebrow>
+      <HeroTitle>
+        The <HeroTitleAccent>Leaderboard.</HeroTitleAccent>
+      </HeroTitle>
+      <HeroLead>The sharpest eyes on the floor, ranked by every five-in-a-row they called.</HeroLead>
+    </Hero>
+    <Card aria-labelledby="leaderboard-title">{children}</Card>
+  </Page>
+);
+LeaderboardPage.displayName = 'LeaderboardPage';
 
 /**
  * The top-20 leaderboard. Only the initial load shows a loading state; refreshes keep the
@@ -23,53 +57,64 @@ const Leaderboard = (): ReactElement => {
 
   if (loading) {
     return (
-      <Panel aria-labelledby="leaderboard-title">
-        <LoadingMessage role="status" aria-live="polite">
+      <LeaderboardPage>
+        <CardTitle id="leaderboard-title">Top Players</CardTitle>
+        <LoadingText role="status" aria-live="polite">
           Loading leaderboard...
-        </LoadingMessage>
-      </Panel>
+        </LoadingText>
+      </LeaderboardPage>
     );
   }
 
   return (
-    <Panel aria-labelledby="leaderboard-title">
-      <Title id="leaderboard-title">🏆 Leaderboard</Title>
+    <LeaderboardPage>
+      <CardHeader>
+        <div>
+          <CardTitle id="leaderboard-title">Top Players</CardTitle>
+          <CardSubtitle>Top 20 by wins. Updates every 30 seconds.</CardSubtitle>
+        </div>
+        <Button type="button" $variant="secondary" $size="small" onClick={refetch}>
+          Refresh
+        </Button>
+      </CardHeader>
 
       {error !== null && <ErrorMessage role="alert">{error}</ErrorMessage>}
 
       {entries !== null && entries.length === 0 && error === null && (
-        <EmptyMessage>No winners yet. Be the first!</EmptyMessage>
+        <EmptyCallout>
+          <EmptyTitle>No winners yet. Be the first!</EmptyTitle>
+          <EmptyText>Get five in a row on the board and your name lands here.</EmptyText>
+        </EmptyCallout>
       )}
 
       {entries !== null && entries.length > 0 && (
         <Table role="table" aria-label="Leaderboard">
           <div role="rowgroup">
-            <Row role="row" $isHeader>
-              <RankCell role="columnheader">Rank</RankCell>
-              <NameCell role="columnheader">Player</NameCell>
-              <WinsCell role="columnheader">Wins</WinsCell>
-            </Row>
+            <HeaderRow role="row">
+              <span role="columnheader">Rank</span>
+              <span role="columnheader">Player</span>
+              <WinsHeader role="columnheader">Wins</WinsHeader>
+            </HeaderRow>
           </div>
           <div role="rowgroup">
-            {entries.map((entry, index) => (
-              <Row key={entry.id} role="row" $isTopThree={index < TOP_THREE_COUNT}>
-                <RankCell role="cell" aria-label={`Rank ${index + 1}`}>
-                  {getRankLabel(index)}
-                </RankCell>
-                <NameCell role="cell">{entry.playerName}</NameCell>
-                <WinsCell role="cell">{entry.wins}</WinsCell>
-              </Row>
-            ))}
+            {entries.map((entry, index) => {
+              const isTopThree = index < TOP_THREE_COUNT;
+              return (
+                <Row key={entry.id} role="row" $isTopThree={isTopThree}>
+                  <RankCell role="cell" aria-label={`Rank ${index + 1}`} $isTopThree={isTopThree}>
+                    {formatRank(index)}
+                  </RankCell>
+                  <NameCell role="cell" $isTopThree={isTopThree}>
+                    {entry.playerName}
+                  </NameCell>
+                  <WinsCell role="cell">{entry.wins}</WinsCell>
+                </Row>
+              );
+            })}
           </div>
         </Table>
       )}
-
-      <Actions>
-        <Button type="button" $variant="secondary" onClick={refetch}>
-          Refresh
-        </Button>
-      </Actions>
-    </Panel>
+    </LeaderboardPage>
   );
 };
 Leaderboard.displayName = 'Leaderboard';

@@ -25,8 +25,8 @@ describe('Leaderboard', () => {
 
       expect(screen.getByRole('status')).toHaveTextContent('Loading leaderboard...');
       expect(await screen.findByText('Player 0')).toBeInTheDocument();
-      expect(screen.getByText('🥇')).toBeInTheDocument();
-      expect(screen.getByText('#4')).toBeInTheDocument();
+      expect(screen.getByText('01')).toBeInTheDocument();
+      expect(screen.getByText('04')).toBeInTheDocument();
       expect(screen.getAllByRole('row')).toHaveLength(5);
     });
   });
