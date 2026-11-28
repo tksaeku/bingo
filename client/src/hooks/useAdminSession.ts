@@ -3,6 +3,7 @@ import { PASSKEY_REJECTED_MESSAGE, SESSION_ENDED_MESSAGE } from '../constants';
 import { adminApi, authApi } from '../services/api';
 import { getAdminSessionSnapshot, setAdminSession, subscribeToAdminSession } from '../services/adminSessionStore';
 import { getErrorMessage, getErrorStatus, getIsCanceled, getIsUnauthorized } from '../services/apiErrors';
+import { PasskeyAlreadyRegisteredError } from '../services/PasskeyAlreadyRegisteredError';
 import { PasskeyDismissedError } from '../services/PasskeyDismissedError';
 import {
   createPasskey,
@@ -147,8 +148,11 @@ export function useAdminSession(): UseAdminSessionResult {
           return true;
         },
         false,
-        (error) =>
-          error instanceof PasskeyDismissedError ? error.message : getErrorMessage(error, 'Could not add the passkey.'),
+        (error) => {
+          const isExpectedPasskeyError =
+            error instanceof PasskeyDismissedError || error instanceof PasskeyAlreadyRegisteredError;
+          return isExpectedPasskeyError ? error.message : getErrorMessage(error, 'Could not add the passkey.');
+        },
       ),
     [runAction],
   );

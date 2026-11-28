@@ -31,6 +31,10 @@ export const BOARD_STORAGE_KEY = 'bingoBoard';
 /** Shown when the passkey prompt is cancelled or times out. */
 export const PASSKEY_DISMISSED_MESSAGE = 'Passkey prompt was dismissed.';
 
+/** Shown when this device already holds a passkey for the app (often one synced from another device). */
+export const PASSKEY_ALREADY_REGISTERED_MESSAGE =
+  'This device already has a passkey for bingo. Lock, then use Unlock with passkey.';
+
 /** Shown when the server rejects a passkey sign-in. */
 export const PASSKEY_REJECTED_MESSAGE = "That passkey wasn't recognized.";
 

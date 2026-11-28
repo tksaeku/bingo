@@ -56,7 +56,7 @@ See the out-of-scope list in [`README.md`](README.md).
 
 - **AC-P13** `/cards`, `/stats` and `/passkeys` render the unlock screen until `GET /api/admin/verify` succeeds, and render a neutral loading state while that first check runs (no flash of the unlock screen for a signed-in browser). Unlocking on any of them unlocks all three.
 - **AC-P14** The unlock screen's primary action is **Unlock with passkey**. When the browser does not support WebAuthn, the passkey action is hidden and the admin-key form is shown directly.
-- **AC-P15** A cancelled or timed-out passkey prompt shows a short, non-alarming message ("Passkey prompt was dismissed.") and leaves the screen usable. A server rejection shows "That passkey wasn't recognized."
+- **AC-P15** A cancelled or timed-out passkey prompt shows a short, non-alarming message ("Passkey prompt was dismissed.") and leaves the screen usable. A server rejection shows "That passkey wasn't recognized." When adding a passkey on a device that already holds one of the app's passkeys (for example, one synced through Google Password Manager or iCloud Keychain), the browser refuses and the dialog shows "This device already has a passkey for bingo. Lock, then use Unlock with passkey."
 - **AC-P16** After a key sign-in on a browser that supports passkeys, the page offers to add a passkey for this device. Dismissing the offer keeps the page unlocked.
 - **AC-P17** A `401` from any admin request returns the page to the unlock screen with "Your admin session ended. Unlock again." (replaces AC-O5's key-clearing behavior).
 - **AC-P18** The client never stores the admin key: not in `sessionStorage`, `localStorage`, or a cookie it can read. The key lives only in the form input until submitted.
