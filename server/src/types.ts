@@ -77,3 +77,16 @@ export type AnalyticsBatchRecord = {
   events: StoredAnalyticsEvent[];
   expireAt: string;
 };
+
+/** A registered admin passkey as stored; the public key and counter never leave the server. */
+export type StoredAdminPasskey = {
+  /** Credential ID (base64url), also the document ID. */
+  id: string;
+  /** base64url of the COSE public key. */
+  publicKey: string;
+  counter: number;
+  transports: string[];
+  name: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+};

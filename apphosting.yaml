@@ -14,3 +14,11 @@ env:
     value: "true"
     availability:
       - RUNTIME
+  - variable: WEBAUTHN_RP_ID
+    value: bingo.wemove.dance
+    availability:
+      - RUNTIME
+  - variable: WEBAUTHN_ORIGINS
+    value: https://bingo.wemove.dance
+    availability:
+      - RUNTIME

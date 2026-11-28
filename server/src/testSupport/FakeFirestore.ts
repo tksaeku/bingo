@@ -60,6 +60,11 @@ export class FakeDocumentReference {
     this.parentCollection = collection;
   }
 
+  /** Reads this document; a missing document comes back with `exists` false. */
+  async get(): Promise<FakeDocumentSnapshot> {
+    return new FakeDocumentSnapshot(this, this.parentCollection.rawDocuments.get(this.id), this.parentCollection.converter);
+  }
+
   /** Subcollection of this document, stored under the full path `parent/id/name`. */
   collection(name: string): FakeCollectionReference {
     return new FakeCollectionReference(this.parentCollection.database, `${this.parentCollection.name}/${this.id}/${name}`);

@@ -13,7 +13,6 @@ const FALLBACK_ERROR_MESSAGE = 'Failed to load the stats.';
  * Changing `days` refetches while the previous data stays available; a 401 calls `onUnauthorized`.
  */
 export function useAnalyticsSummary(
-  adminKey: string,
   days: AnalyticsRangeDays,
   onUnauthorized: () => void,
 ): AsyncResource<AnalyticsSummary> {
@@ -25,7 +24,7 @@ export function useAnalyticsSummary(
   const fetchSummary = useCallback(
     async (signal: AbortSignal): Promise<AnalyticsSummary> => {
       try {
-        return await analyticsApi.getSummary(adminKey, days, signal);
+        return await analyticsApi.getSummary(days, signal);
       } catch (error) {
         if (getIsUnauthorized(error)) {
           onUnauthorizedRef.current();
@@ -33,7 +32,7 @@ export function useAnalyticsSummary(
         throw error;
       }
     },
-    [adminKey, days],
+    [days],
   );
 
   return useAsyncResource(fetchSummary, FALLBACK_ERROR_MESSAGE, ANALYTICS_SUMMARY_REFRESH_INTERVAL_MS);

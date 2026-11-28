@@ -35,7 +35,6 @@ import {
 } from './OptionsManager.styles';
 
 interface OptionsManagerProps {
-  adminKey: string;
   /** Called when the server rejects the admin key (HTTP 401). */
   onUnauthorized: () => void;
 }
@@ -52,7 +51,7 @@ function getAddErrorMessage(error: unknown): string {
  * Admin editor for the card deck (the option pool). Mutations keep the list on screen, guard against
  * overlapping requests, and confirm deletes with an in-page control.
  */
-const OptionsManager = ({ adminKey, onUnauthorized }: OptionsManagerProps): ReactElement => {
+const OptionsManager = ({ onUnauthorized }: OptionsManagerProps): ReactElement => {
   const { data: options, loading, error: loadError, refetch } = useOptions();
   const [newOptionText, setNewOptionText] = useState('');
   const [isMutating, setIsMutating] = useState(false);
@@ -78,7 +77,7 @@ const OptionsManager = ({ adminKey, onUnauthorized }: OptionsManagerProps): Reac
     setIsMutating(true);
     setActionError(null);
     try {
-      await optionsApi.create(text, adminKey);
+      await optionsApi.create(text);
       setNewOptionText('');
       refetch();
       inputRef.current?.focus();
@@ -96,7 +95,7 @@ const OptionsManager = ({ adminKey, onUnauthorized }: OptionsManagerProps): Reac
     setIsMutating(true);
     setActionError(null);
     try {
-      await optionsApi.delete(optionId, adminKey);
+      await optionsApi.delete(optionId);
       setPendingDeleteId(null);
       refetch();
       inputRef.current?.focus();

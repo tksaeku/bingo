@@ -32,7 +32,6 @@ const RANGE_PRESETS: ReadonlyArray<{ days: AnalyticsRangeDays; label: string }> 
 const DEFAULT_RANGE_DAYS: AnalyticsRangeDays = 7;
 
 interface StatsDashboardProps {
-  adminKey: string;
   /** Called when the server rejects the admin key (HTTP 401). */
   onUnauthorized: () => void;
 }
@@ -85,9 +84,9 @@ SummarySections.displayName = 'SummarySections';
  * Analytics dashboard for the selected range. Only the first load shows a loading state; refreshes and range
  * changes keep the previous numbers on screen, and a failed fetch shows an error rather than zeros.
  */
-const StatsDashboard = ({ adminKey, onUnauthorized }: StatsDashboardProps): ReactElement => {
+const StatsDashboard = ({ onUnauthorized }: StatsDashboardProps): ReactElement => {
   const [days, setDays] = useState<AnalyticsRangeDays>(DEFAULT_RANGE_DAYS);
-  const { data: summary, loading, error, refetch } = useAnalyticsSummary(adminKey, days, onUnauthorized);
+  const { data: summary, loading, error, refetch } = useAnalyticsSummary(days, onUnauthorized);
 
   if (loading) {
     return (

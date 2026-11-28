@@ -5,6 +5,7 @@ import BingoBoard from './components/BingoBoard/BingoBoard';
 import Leaderboard from './components/Leaderboard/Leaderboard';
 import { usePageViewTracking } from './hooks/usePageViewTracking';
 import CardsPage from './pages/CardsPage/CardsPage';
+import PasskeysPage from './pages/PasskeysPage/PasskeysPage';
 import StatsPage from './pages/StatsPage/StatsPage';
 import { trackEvent } from './services/analytics';
 import { THE_OPEN_WEBSITE_URL } from './constants';
@@ -26,7 +27,7 @@ import {
 import { GlobalStyle } from './styles/GlobalStyle';
 import { theme } from './theme';
 
-/** App shell: header navigation, footer and routes. The admin pages have no nav links: they are reached at /cards and /stats, both behind the admin key. Needs a Router ancestor. */
+/** App shell: header navigation, footer and routes. The admin pages have no nav links: they are reached at /cards, /stats and /passkeys, all behind the admin unlock screen. Needs a Router ancestor. */
 const App = (): ReactElement => {
   usePageViewTracking();
 
@@ -71,6 +72,7 @@ const App = (): ReactElement => {
             <Route path="/options" element={<Navigate to="/cards" replace />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/stats" element={<StatsPage />} />
+            <Route path="/passkeys" element={<PasskeysPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Main>

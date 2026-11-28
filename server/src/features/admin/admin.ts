@@ -5,14 +5,14 @@ type Middleware = (req: Request, res: Response, next: NextFunction) => void;
 
 type AdminRouterDependencies = {
   adminLimiter: Middleware;
-  requireAdminKey: Middleware;
+  requireAdmin: Middleware;
 };
 
-/** Assembles the /api/admin router; every route requires the admin key. */
+/** Assembles the /api/admin router; every route requires admin auth. */
 export function createAdminRouter(dependencies: AdminRouterDependencies): Router {
   const router = Router();
 
-  router.use(dependencies.adminLimiter, dependencies.requireAdminKey);
+  router.use(dependencies.adminLimiter, dependencies.requireAdmin);
   router.get('/verify', verifyHandler);
 
   return router;

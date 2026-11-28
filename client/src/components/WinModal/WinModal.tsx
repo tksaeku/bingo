@@ -5,6 +5,7 @@ import { getIsValidPlayerName, normalizePlayerName } from '../../game/playerName
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { getErrorMessage } from '../../services/apiErrors';
 import { Button } from '../../styles/Button';
+import { ModalOverlay } from '../../styles/Modal';
 import { ErrorMessage, FieldLabel, TextInput } from '../../styles/Form';
 import { createConfettiPieces } from './confetti';
 import {
@@ -17,7 +18,6 @@ import {
   Form,
   Message,
   NameField,
-  Overlay,
   StatusText,
   Title,
   TitleGlyph,
@@ -72,7 +72,7 @@ const WinModal = ({ onSubmit, onClose, onPlayAgain }: WinModalProps): ReactEleme
   };
 
   return (
-    <Overlay>
+    <ModalOverlay>
       <Dialog ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
         <Confetti aria-hidden="true">
           {confettiPieces.map((piece, index) => (
@@ -134,7 +134,7 @@ const WinModal = ({ onSubmit, onClose, onPlayAgain }: WinModalProps): ReactEleme
           </>
         )}
       </Dialog>
-    </Overlay>
+    </ModalOverlay>
   );
 };
 WinModal.displayName = 'WinModal';

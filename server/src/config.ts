@@ -1,4 +1,4 @@
-import { DEFAULT_CORS_ORIGINS, DEFAULT_PORT, DEFAULT_TRUSTED_PROXY_HOPS } from './constants';
+import { DEFAULT_CORS_ORIGINS, DEFAULT_PORT, DEFAULT_TRUSTED_PROXY_HOPS, DEFAULT_WEBAUTHN_ORIGINS, DEFAULT_WEBAUTHN_RP_ID } from './constants';
 
 /**
  * Parses a comma-separated CORS_ORIGINS value into an allow-list.
@@ -27,4 +27,19 @@ export function parseTrustedProxyHops(rawValue: string | undefined): number {
 /** Analytics collection is on only when ANALYTICS_ENABLED is exactly the string 'true'. */
 export function parseAnalyticsEnabled(rawValue: string | undefined): boolean {
   return rawValue === 'true';
+}
+
+/** Parses a comma-separated WEBAUTHN_ORIGINS value; falls back to the default origins when unset or empty. */
+export function parseWebAuthnOrigins(rawValue: string | undefined): string[] {
+  const origins = (rawValue ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+  return origins.length > 0 ? origins : [...DEFAULT_WEBAUTHN_ORIGINS];
+}
+
+/** Resolves the WebAuthn relying party ID from WEBAUTHN_RP_ID, defaulting when unset or blank. */
+export function parseWebAuthnRpId(rawValue: string | undefined): string {
+  const rpId = (rawValue ?? '').trim();
+  return rpId.length > 0 ? rpId : DEFAULT_WEBAUTHN_RP_ID;
 }

@@ -108,3 +108,21 @@ export interface AnalyticsSummary {
 
 /** Day ranges the summary endpoint accepts. */
 export type AnalyticsRangeDays = 1 | 7 | 30;
+
+export type {
+  AuthenticationResponseJSON,
+  PublicKeyCredentialCreationOptionsJSON,
+  PublicKeyCredentialRequestOptionsJSON,
+  RegistrationResponseJSON,
+} from '@simplewebauthn/browser';
+
+/** A registered admin passkey as returned by the API. */
+export interface AdminPasskey {
+  id: string;
+  name: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
+/** Whether the admin session is being checked, absent, or active. */
+export type AdminSessionStatus = 'checking' | 'locked' | 'unlocked';

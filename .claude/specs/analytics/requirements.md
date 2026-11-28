@@ -63,7 +63,7 @@ Each step counts **unique visitors per day** who reached it:
 
 ### Dashboard (`/stats`)
 
-- **AC-A14** `/stats` shows the existing admin-key form until a verified key is held, then the dashboard. Like `/cards`, it has no nav link and uses the same admin key, so a key verified on either page unlocks both for the browser session. A `401` clears the stored key and returns to the key form (same as AC-O5).
+- **AC-A14** `/stats` shows the admin unlock screen until the admin session is verified, then the dashboard. Like `/cards`, it has no nav link and shares the same admin session, so unlocking either page unlocks both. A `401` returns to the unlock screen (same as AC-O5).
 - **AC-A15** Range presets: **Today**, **Last 7 days** (default), **Last 30 days**. Days are `America/Los_Angeles` days and include today.
 - **AC-A16** The dashboard shows, for the selected range:
   - KPI tiles: unique visitors, boards started, bingos, scores submitted.

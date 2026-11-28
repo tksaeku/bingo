@@ -1,15 +1,28 @@
 import type { ReactElement } from 'react';
-import AdminKeyForm from '../../components/AdminKeyForm/AdminKeyForm';
+import AddPasskeyOffer from '../../components/AddPasskeyOffer/AddPasskeyOffer';
+import AdminUnlock from '../../components/AdminUnlock/AdminUnlock';
 import StatsDashboard from '../../components/StatsDashboard/StatsDashboard/StatsDashboard';
-import { useAdminKey } from '../../hooks/useAdminKey';
+import { useAdminSession } from '../../hooks/useAdminSession';
+import { Card, CardLoading } from '../../styles/Card';
 import { Eyebrow, Hero, HeroLead, HeroTitle, HeroTitleAccent, Page } from '../../styles/PageHero';
 
-/** Shown on the key form after the server rejects the stored key. */
-const KEY_REJECTED_MESSAGE = 'Your admin key was rejected. Enter it again.';
-
-/** Admin page for usage stats: the admin-key form until a verified key is held, then the dashboard. */
+/** Admin page for usage stats: the unlock screen until the session is unlocked, then the dashboard. */
 const StatsPage = (): ReactElement => {
-  const { adminKey, isVerifying, error, verifyAndStore, clearAdminKey } = useAdminKey();
+  const {
+    status,
+    isBusy,
+    error,
+    justSignedInWithKey,
+    unlockWithPasskey,
+    unlockWithKey,
+    addPasskey,
+    dismissAddPasskeyOffer,
+    markSessionEnded,
+  } = useAdminSession();
+
+  const handleAddPasskey = async (name?: string): Promise<void> => {
+    await addPasskey(name);
+  };
 
   return (
     <Page>
@@ -20,15 +33,34 @@ const StatsPage = (): ReactElement => {
         </HeroTitle>
         <HeroLead>Anonymous usage numbers for the game: who plays, how far they get, and when.</HeroLead>
       </Hero>
-      {adminKey === null ? (
-        <AdminKeyForm
-          onVerify={verifyAndStore}
-          isVerifying={isVerifying}
+      {status === 'checking' && (
+        <Card>
+          <CardLoading role="status" aria-live="polite">
+            Checking admin session...
+          </CardLoading>
+        </Card>
+      )}
+      {status === 'locked' && (
+        <AdminUnlock
+          onUnlockWithPasskey={unlockWithPasskey}
+          onUnlockWithKey={unlockWithKey}
+          isBusy={isBusy}
           errorMessage={error}
-          description="Enter the admin key to view the usage stats."
+          description="Unlock to view the usage stats."
         />
-      ) : (
-        <StatsDashboard adminKey={adminKey} onUnauthorized={() => clearAdminKey(KEY_REJECTED_MESSAGE)} />
+      )}
+      {status === 'unlocked' && (
+        <>
+          {justSignedInWithKey && (
+            <AddPasskeyOffer
+              onAdd={handleAddPasskey}
+              onDismiss={dismissAddPasskeyOffer}
+              isBusy={isBusy}
+              error={error}
+            />
+          )}
+          <StatsDashboard onUnauthorized={markSessionEnded} />
+        </>
       )}
     </Page>
   );

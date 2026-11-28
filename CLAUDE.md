@@ -36,11 +36,12 @@ Layered route → service → repository:
 
 - `index.ts` — entry point; loads env, calls `createApp()`, listens on `PORT`.
 - `app.ts` — `createApp()` factory: CORS allow-list, JSON body limit, rate limiting, feature routers, the built client (static files + SPA fallback via `middleware/serveClient.ts`, skipped when `client/dist` is missing), 404 + error middleware. Tests import this directly.
-- `features/<feature>/` — one folder per resource (`options`, `leaderboard`, `admin`, `analytics`): router assembler, one handler file per endpoint, a service holding business rules, Zod schemas, co-located `.test.ts` files.
-- `repositories/` — the only code that touches Firestore (one class per PascalCase file). Typed converters map Firestore `Timestamp` → ISO strings.
+- `features/<feature>/` — one folder per resource (`options`, `leaderboard`, `admin`, `analytics`, `adminAuth`): router assembler, one handler file per endpoint, a service holding business rules, Zod schemas, co-located `.test.ts` files.
+- `features/adminAuth/` — passkey and session auth: `/api/auth` (key sign-in, sign-out, passkey sign-in) and `/api/admin/passkeys` (register, list, delete). `adminAuthService` holds the rules, `signedToken` signs the session and challenge cookies (HMAC, key derived from `ADMIN_KEY`), and `webAuthnAdapter` wraps `@simplewebauthn/server` so tests inject a fake. Spec: `.claude/specs/passkey/`.
+- `repositories/` — the only code that touches Firestore (one class per PascalCase file). Typed converters map Firestore `Timestamp` → ISO strings. `FirestoreAdminPasskeyRepository` stores passkeys in `adminPasskeys` (doc ID = credential ID).
 - `testSupport/` — in-memory fake repositories and `createTestApp` for supertest; excluded from the build.
 - `scripts/` — `seed.ts`, `migrateLeaderboard.ts` (dry run unless `--apply`) and `exportAnalytics.ts` (read-only JSON-lines export of raw analytics events).
-- `middleware/` — `requireAdminKey`, error handler, validation helper, rate limiters, `serveClient`.
+- `middleware/` — `requireAdmin` (valid session cookie or `x-admin-key` header), error handler, validation helper, rate limiters, `serveClient`.
 - `services/firestore.ts` — Admin SDK init from `FIREBASE_SERVICE_ACCOUNT_PATH` locally, otherwise Application Default Credentials (ambient on App Hosting). Honors `FIRESTORE_EMULATOR_HOST`.
 
 ### Client (`client/src/`)
@@ -49,7 +50,7 @@ Thin client — all rules that matter (validation, dedupe, win counting, auth) a
 
 - `components/<Name>/` — folder per component: `<Name>.tsx`, `<Name>.styles.ts` (styled-components), `<Name>.test.tsx`.
 - `pages/` — route-level components.
-- `hooks/` — data hooks (`useOptions`, `useLeaderboard`, `useAdminKey`, `useAnalyticsSummary`) returning `{ data, loading, error, refetch }`.
+- `hooks/` — data hooks (`useOptions`, `useLeaderboard`, `useAnalyticsSummary`, `usePasskeys`) returning `{ data, loading, error, refetch }`, and `useAdminSession`, the shared admin session state (verify, unlock with passkey or key, add a passkey, lock) backed by `services/adminSessionStore.ts`.
 - `game/` — pure, framework-free game logic (board generation, win detection, saved-board validation).
 - `services/api.ts` — the only place that calls the HTTP API.
 - `types.ts`, `constants.ts`, `theme.ts` — shared types, constants and design tokens.
@@ -64,8 +65,8 @@ Thin client — all rules that matter (validation, dedupe, win counting, auth) a
 
 ## Environment
 
-- `server/.env` (see `server/.env.example`): `PORT`, `ADMIN_KEY`, `CORS_ORIGINS`, `TRUSTED_PROXY_HOPS`, `FIREBASE_SERVICE_ACCOUNT_PATH`, `FIRESTORE_EMULATOR_HOST`, `ANALYTICS_ENABLED` (collection is on only for the string `true`; set to `"true"` in `apphosting.yaml`).
-- `client/.env.development`: `VITE_API_URL` (the local API). Production builds leave it unset and use the same-origin `/api`.
+- `server/.env` (see `server/.env.example`): `PORT`, `ADMIN_KEY`, `CORS_ORIGINS`, `TRUSTED_PROXY_HOPS`, `FIREBASE_SERVICE_ACCOUNT_PATH`, `FIRESTORE_EMULATOR_HOST`, `ANALYTICS_ENABLED` (collection is on only for the string `true`; set to `"true"` in `apphosting.yaml`), `WEBAUTHN_RP_ID` (default `localhost`) and `WEBAUTHN_ORIGINS` (comma-separated, default `http://localhost:5173`); production values are in `apphosting.yaml`.
+- Client: the Vite dev server proxies `/api` to the Express server on `:5174`, so dev is same-origin like production and the session cookie and WebAuthn origin behave the same. `VITE_API_URL` is an optional override and normally unset.
 - The repo is **public** — never commit keys, `.env` files or `serviceAccountKey.json`.
 
 ## Conventions
