@@ -1,8 +1,14 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { PASSKEY_DISMISSED_MESSAGE, PASSKEY_REJECTED_MESSAGE, SESSION_ENDED_MESSAGE } from '../constants';
+import {
+  PASSKEY_ALREADY_REGISTERED_MESSAGE,
+  PASSKEY_DISMISSED_MESSAGE,
+  PASSKEY_REJECTED_MESSAGE,
+  SESSION_ENDED_MESSAGE,
+} from '../constants';
 import { adminApi, authApi } from '../services/api';
 import { getAdminSessionSnapshot, setAdminSession } from '../services/adminSessionStore';
+import { PasskeyAlreadyRegisteredError } from '../services/PasskeyAlreadyRegisteredError';
 import { PasskeyDismissedError } from '../services/PasskeyDismissedError';
 import {
   createPasskey,
@@ -188,6 +194,19 @@ describe('useAdminSession', () => {
       });
 
       expect(result.current.error).toBe(PASSKEY_DISMISSED_MESSAGE);
+      expect(result.current.status).toBe('unlocked');
+    });
+
+    it('keeps the session and explains a device that already has a passkey', async () => {
+      setAdminSession('unlocked');
+      vi.mocked(createPasskey).mockRejectedValue(new PasskeyAlreadyRegisteredError());
+      const { result } = renderHook(() => useAdminSession());
+
+      await act(async () => {
+        await result.current.addPasskey();
+      });
+
+      expect(result.current.error).toBe(PASSKEY_ALREADY_REGISTERED_MESSAGE);
       expect(result.current.status).toBe('unlocked');
     });
   });

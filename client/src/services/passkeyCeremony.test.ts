@@ -4,7 +4,7 @@ import {
   browserSupportsWebAuthn,
 } from '@simplewebauthn/browser';
 import { describe, expect, it, vi } from 'vitest';
-import { PASSKEY_DISMISSED_MESSAGE } from '../constants';
+import { PASSKEY_ALREADY_REGISTERED_MESSAGE, PASSKEY_DISMISSED_MESSAGE } from '../constants';
 import type {
   AdminPasskey,
   AuthenticationResponseJSON,
@@ -13,6 +13,7 @@ import type {
   RegistrationResponseJSON,
 } from '../types';
 import { authApi, passkeysApi } from './api';
+import { PasskeyAlreadyRegisteredError } from './PasskeyAlreadyRegisteredError';
 import { PasskeyDismissedError } from './PasskeyDismissedError';
 import {
   createPasskey,
@@ -139,6 +140,20 @@ describe('passkeyCeremony', () => {
       vi.mocked(startRegistration).mockRejectedValue(createNamedError('NotAllowedError'));
 
       await expect(createPasskey()).rejects.toBeInstanceOf(PasskeyDismissedError);
+      expect(passkeysApi.register).not.toHaveBeenCalled();
+    });
+
+    it('maps InvalidStateError to PasskeyAlreadyRegisteredError', async () => {
+      vi.mocked(passkeysApi.getRegistrationOptions).mockResolvedValue(
+        {} as PublicKeyCredentialCreationOptionsJSON
+      );
+      vi.mocked(passkeysApi.register).mockClear();
+      vi.mocked(startRegistration).mockRejectedValue(createNamedError('InvalidStateError'));
+
+      const failure = await createPasskey().catch((error: unknown) => error);
+
+      expect(failure).toBeInstanceOf(PasskeyAlreadyRegisteredError);
+      expect((failure as Error).message).toBe(PASSKEY_ALREADY_REGISTERED_MESSAGE);
       expect(passkeysApi.register).not.toHaveBeenCalled();
     });
   });
