@@ -94,3 +94,31 @@ export const ANALYTICS_FUNNEL_STEPS = ['visited', 'played', 'marked', 'won', 'su
 
 /** UUID v4 pattern for visitor IDs (lowercase). */
 export const VISITOR_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+/** Firestore collection holding registered admin passkeys, keyed by credential ID. */
+export const ADMIN_PASSKEYS_COLLECTION = 'adminPasskeys';
+/** Name of the signed admin session cookie. */
+export const ADMIN_SESSION_COOKIE = 'bingo_admin_session';
+/** Name of the signed WebAuthn challenge cookie. */
+export const WEBAUTHN_CHALLENGE_COOKIE = 'bingo_webauthn_challenge';
+/** Admin session lifetime (12 hours). */
+export const ADMIN_SESSION_TTL_MS = 43_200_000;
+/** WebAuthn challenge lifetime (5 minutes). */
+export const WEBAUTHN_CHALLENGE_TTL_MS = 300_000;
+/** WebAuthn user handle shared by every admin passkey (UTF-8 bytes of `bingo-admin`). */
+export const ADMIN_USER_HANDLE = new TextEncoder().encode('bingo-admin');
+/** Purpose string the admin session signing key is derived with. */
+export const ADMIN_SESSION_KEY_PURPOSE = 'bingo-admin-session';
+/** Purpose string the WebAuthn challenge signing key is derived with. */
+export const WEBAUTHN_CHALLENGE_KEY_PURPOSE = 'bingo-webauthn-challenge';
+/** Relying party display name shown by authenticators. */
+export const WEBAUTHN_RP_NAME = 'Bingo admin';
+/** Auth requests allowed per IP per rate-limit window. */
+export const AUTH_LIMIT_PER_WINDOW = 10;
+/** Maximum passkey name length after trimming. */
+export const MAX_PASSKEY_NAME_LENGTH = 40;
+
+/** Relying party ID when WEBAUTHN_RP_ID is unset. */
+export const DEFAULT_WEBAUTHN_RP_ID = 'localhost';
+/** Allowed WebAuthn origins when WEBAUTHN_ORIGINS is unset. */
+export const DEFAULT_WEBAUTHN_ORIGINS: readonly string[] = ['http://localhost:5173'];

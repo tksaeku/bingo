@@ -13,7 +13,7 @@ vi.mock('../../services/api', () => ({
   adminApi: { verify: vi.fn() },
 }));
 
-const createProps = () => ({ adminKey: 'secret', onUnauthorized: vi.fn() });
+const createProps = () => ({ onUnauthorized: vi.fn() });
 
 describe('OptionsManager', () => {
   describe('loading the list', () => {
@@ -70,7 +70,7 @@ describe('OptionsManager', () => {
   });
 
   describe('adding an option', () => {
-    it('sends the trimmed text with the admin key, clears the input, and keeps the list visible', async () => {
+    it('sends the trimmed text, clears the input, and keeps the list visible', async () => {
       vi.mocked(optionsApi.getAll).mockResolvedValue(createOptions(2));
       vi.mocked(optionsApi.create).mockResolvedValue(createOptions(1)[0]);
       renderWithProviders(<OptionsManager {...createProps()} />);
@@ -80,7 +80,7 @@ describe('OptionsManager', () => {
       await userEvent.type(input, '  Fresh idea  ');
       await userEvent.click(screen.getByRole('button', { name: 'Add Card' }));
 
-      expect(optionsApi.create).toHaveBeenCalledWith('Fresh idea', 'secret');
+      expect(optionsApi.create).toHaveBeenCalledWith('Fresh idea');
       await waitFor(() => expect(input).toHaveValue(''));
       expect(input).toHaveFocus();
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
@@ -150,7 +150,7 @@ describe('OptionsManager', () => {
       expect(screen.getByText('Delete this card?')).toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
-      expect(optionsApi.delete).toHaveBeenCalledWith('option-0', 'secret');
+      expect(optionsApi.delete).toHaveBeenCalledWith('option-0');
       await waitFor(() => expect(screen.queryByText('Delete this card?')).not.toBeInTheDocument());
       expect(confirmSpy).not.toHaveBeenCalled();
       expect(screen.getByLabelText('New card')).toHaveFocus();

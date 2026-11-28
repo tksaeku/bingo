@@ -1,4 +1,5 @@
 import type { CreateAxiosDefaults } from 'axios';
+import type { AuthenticationResponseJSON, RegistrationResponseJSON } from '../types';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -29,7 +30,9 @@ beforeAll(async () => {
 describe('api client configuration', () => {
   it('uses a JSON content type and an /api base URL', () => {
     expect(mocks.createdConfig?.baseURL).toMatch(/\/api$/);
-    expect((mocks.createdConfig?.headers as Record<string, string>)['Content-Type']).toBe('application/json');
+    expect((mocks.createdConfig?.headers as Record<string, string>)['Content-Type']).toBe(
+      'application/json'
+    );
   });
 });
 
@@ -42,18 +45,18 @@ describe('optionsApi', () => {
     expect(mocks.client.get).toHaveBeenCalledWith('/options', { signal });
   });
 
-  it('creates an option with the x-admin-key header', async () => {
+  it('creates an option without an x-admin-key header', async () => {
     mocks.client.post.mockResolvedValue({ data: { id: 'a', text: 'Hi' } });
 
-    await expect(api.optionsApi.create('Hi', 'secret')).resolves.toEqual({ id: 'a', text: 'Hi' });
-    expect(mocks.client.post).toHaveBeenCalledWith('/options', { text: 'Hi' }, { headers: { 'x-admin-key': 'secret' } });
+    await expect(api.optionsApi.create('Hi')).resolves.toEqual({ id: 'a', text: 'Hi' });
+    expect(mocks.client.post).toHaveBeenCalledWith('/options', { text: 'Hi' });
   });
 
-  it('deletes an option by encoded id with the x-admin-key header', async () => {
+  it('deletes an option by encoded id', async () => {
     mocks.client.delete.mockResolvedValue({ status: 204 });
 
-    await expect(api.optionsApi.delete('a/b c', 'secret')).resolves.toBeUndefined();
-    expect(mocks.client.delete).toHaveBeenCalledWith('/options/a%2Fb%20c', { headers: { 'x-admin-key': 'secret' } });
+    await expect(api.optionsApi.delete('a/b c')).resolves.toBeUndefined();
+    expect(mocks.client.delete).toHaveBeenCalledWith('/options/a%2Fb%20c');
   });
 });
 
@@ -74,12 +77,100 @@ describe('leaderboardApi', () => {
 });
 
 describe('adminApi', () => {
-  it('verifies the key against /admin/verify with the x-admin-key header', async () => {
+  it('verifies the session against /admin/verify', async () => {
     const signal = new AbortController().signal;
     mocks.client.get.mockResolvedValue({ status: 204 });
 
-    await expect(api.adminApi.verify('secret', signal)).resolves.toBeUndefined();
-    expect(mocks.client.get).toHaveBeenCalledWith('/admin/verify', { headers: { 'x-admin-key': 'secret' }, signal });
+    await expect(api.adminApi.verify(signal)).resolves.toBeUndefined();
+    expect(mocks.client.get).toHaveBeenCalledWith('/admin/verify', { signal });
+  });
+});
+
+describe('authApi', () => {
+  it('signs in with the admin key in the body', async () => {
+    mocks.client.post.mockResolvedValue({ status: 204 });
+
+    await expect(api.authApi.signInWithKey('secret')).resolves.toBeUndefined();
+    expect(mocks.client.post).toHaveBeenCalledWith('/auth/session', { adminKey: 'secret' });
+  });
+
+  it('signs out', async () => {
+    mocks.client.delete.mockResolvedValue({ status: 204 });
+
+    await expect(api.authApi.signOut()).resolves.toBeUndefined();
+    expect(mocks.client.delete).toHaveBeenCalledWith('/auth/session');
+  });
+
+  it('gets passkey sign-in options', async () => {
+    mocks.client.post.mockResolvedValue({ data: { challenge: 'c' } });
+
+    await expect(api.authApi.getPasskeyOptions()).resolves.toEqual({ challenge: 'c' });
+    expect(mocks.client.post).toHaveBeenCalledWith('/auth/passkey/options');
+  });
+
+  it('verifies a passkey response wrapped in { response }', async () => {
+    const response = { id: 'cred' } as AuthenticationResponseJSON;
+    mocks.client.post.mockResolvedValue({ status: 204 });
+
+    await expect(api.authApi.verifyPasskey(response)).resolves.toBeUndefined();
+    expect(mocks.client.post).toHaveBeenCalledWith('/auth/passkey/verify', { response });
+  });
+});
+
+describe('passkeysApi', () => {
+  it('gets registration options', async () => {
+    mocks.client.post.mockResolvedValue({ data: { challenge: 'c' } });
+
+    await expect(api.passkeysApi.getRegistrationOptions()).resolves.toEqual({ challenge: 'c' });
+    expect(mocks.client.post).toHaveBeenCalledWith('/admin/passkeys/registration-options');
+  });
+
+  it('registers a passkey with its name', async () => {
+    const response = { id: 'cred' } as RegistrationResponseJSON;
+    mocks.client.post.mockResolvedValue({ data: { id: 'cred', name: 'Laptop' } });
+
+    await expect(api.passkeysApi.register(response, 'Laptop')).resolves.toEqual({
+      id: 'cred',
+      name: 'Laptop',
+    });
+    expect(mocks.client.post).toHaveBeenCalledWith('/admin/passkeys', { response, name: 'Laptop' });
+  });
+
+  it('lists passkeys', async () => {
+    const signal = new AbortController().signal;
+    mocks.client.get.mockResolvedValue({ data: [{ id: 'cred' }] });
+
+    await expect(api.passkeysApi.list(signal)).resolves.toEqual([{ id: 'cred' }]);
+    expect(mocks.client.get).toHaveBeenCalledWith('/admin/passkeys', { signal });
+  });
+
+  it('removes a passkey by encoded id', async () => {
+    mocks.client.delete.mockResolvedValue({ status: 204 });
+
+    await expect(api.passkeysApi.remove('a/b')).resolves.toBeUndefined();
+    expect(mocks.client.delete).toHaveBeenCalledWith('/admin/passkeys/a%2Fb');
+  });
+});
+
+describe('admin calls', () => {
+  it('never send an x-admin-key header', async () => {
+    mocks.client.get.mockResolvedValue({ data: [] });
+    mocks.client.post.mockResolvedValue({ data: {} });
+    mocks.client.delete.mockResolvedValue({});
+
+    await api.optionsApi.create('Hi');
+    await api.optionsApi.delete('a');
+    await api.adminApi.verify();
+    await api.analyticsApi.getSummary(7);
+    await api.passkeysApi.list();
+    await api.passkeysApi.remove('a');
+
+    const allCalls = [
+      ...mocks.client.get.mock.calls,
+      ...mocks.client.post.mock.calls,
+      ...mocks.client.delete.mock.calls,
+    ];
+    expect(JSON.stringify(allCalls).toLowerCase()).not.toContain('x-admin-key');
   });
 });
 
@@ -102,20 +193,19 @@ describe('analyticsApi', () => {
     await expect(api.analyticsApi.sendEvents(batch, { keepalive: true })).resolves.toBe(204);
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringMatching(/\/api\/analytics\/events$/),
-      expect.objectContaining({ method: 'POST', keepalive: true, body: JSON.stringify(batch) }),
+      expect.objectContaining({ method: 'POST', keepalive: true, body: JSON.stringify(batch) })
     );
     vi.unstubAllGlobals();
   });
 
-  it('gets the summary with the admin key and days', async () => {
+  it('gets the summary for the day range', async () => {
     const signal = new AbortController().signal;
     mocks.client.get.mockResolvedValue({ data: { uniqueVisitors: 3 } });
 
-    await expect(api.analyticsApi.getSummary('secret', 7, signal)).resolves.toEqual({
+    await expect(api.analyticsApi.getSummary(7, signal)).resolves.toEqual({
       uniqueVisitors: 3,
     });
     expect(mocks.client.get).toHaveBeenCalledWith('/admin/analytics', {
-      headers: { 'x-admin-key': 'secret' },
       params: { days: 7 },
       signal,
     });

@@ -5,6 +5,7 @@ import App from './App';
 import { trackEvent } from './services/analytics';
 import { analyticsApi } from './services/api';
 import { createSavedBoardJson } from './test/factories';
+import { setAdminSession } from './services/adminSessionStore';
 import { renderWithProviders } from './test/renderWithProviders';
 
 vi.mock('./services/api', () => ({
@@ -17,7 +18,7 @@ vi.mock('./services/api', () => ({
 vi.mock('./services/analytics', () => ({ trackEvent: vi.fn() }));
 
 describe('App navigation', () => {
-  describe('without a verified admin key', () => {
+  describe('without an unlocked admin session', () => {
     it('shows Play and Leaderboard but no cards link', () => {
       localStorage.setItem('bingoBoard', createSavedBoardJson());
       renderWithProviders(<App />);
@@ -28,9 +29,9 @@ describe('App navigation', () => {
     });
   });
 
-  describe('with a verified admin key in sessionStorage', () => {
+  describe('with an unlocked admin session', () => {
     it('still hides the cards link', () => {
-      sessionStorage.setItem('bingoAdminKey', 'verified');
+      setAdminSession('unlocked');
       localStorage.setItem('bingoBoard', createSavedBoardJson());
       renderWithProviders(<App />);
 
@@ -49,6 +50,7 @@ describe('App navigation', () => {
 
   describe('visiting /cards without a key', () => {
     it('shows the admin key form', () => {
+      setAdminSession('locked');
       renderWithProviders(<App />, '/cards');
 
       expect(screen.getByLabelText('Admin key')).toBeInTheDocument();
@@ -57,9 +59,10 @@ describe('App navigation', () => {
 
   describe('visiting the old /options path', () => {
     it('redirects to the cards page', () => {
+      setAdminSession('locked');
       renderWithProviders(<App />, '/options');
 
-      expect(screen.getByRole('heading', { name: 'Admin Access' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Admin' })).toBeInTheDocument();
     });
   });
 
@@ -100,7 +103,7 @@ describe('App navigation', () => {
 
   describe('Stats link', () => {
     it('is never shown in the nav, even with a verified key', () => {
-      sessionStorage.setItem('bingoAdminKey', 'verified');
+      setAdminSession('unlocked');
       localStorage.setItem('bingoBoard', createSavedBoardJson());
       renderWithProviders(<App />);
 
@@ -110,7 +113,7 @@ describe('App navigation', () => {
 
   describe('visiting /stats with the key verified on /cards', () => {
     it('shows the dashboard without asking for the key again', () => {
-      sessionStorage.setItem('bingoAdminKey', 'verified');
+      setAdminSession('unlocked');
       vi.mocked(analyticsApi.getSummary).mockReturnValue(new Promise(() => undefined));
       renderWithProviders(<App />, '/stats');
 
@@ -122,8 +125,21 @@ describe('App navigation', () => {
   describe('visiting /stats without a key', () => {
     it('shows the admin key form and does not track a page view', () => {
       vi.mocked(trackEvent).mockClear();
+      setAdminSession('locked');
       renderWithProviders(<App />, '/stats');
 
+      expect(screen.getByLabelText('Admin key')).toBeInTheDocument();
+      expect(trackEvent).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('visiting /passkeys without a key', () => {
+    it('shows the passkeys page behind the admin key form and does not track a page view', () => {
+      vi.mocked(trackEvent).mockClear();
+      setAdminSession('locked');
+      renderWithProviders(<App />, '/passkeys');
+
+      expect(screen.getByRole('heading', { name: /Passkeys\./ })).toBeInTheDocument();
       expect(screen.getByLabelText('Admin key')).toBeInTheDocument();
       expect(trackEvent).not.toHaveBeenCalled();
     });

@@ -39,7 +39,7 @@ This starts the API on http://localhost:5174 and the client on http://localhost:
 
 ### Client environment
 
-`client/.env.development` sets `VITE_API_URL` to the local API (`http://localhost:5174/api`). Production builds leave it unset and call the same-origin `/api`.
+The Vite dev server proxies `/api` to the local API on `:5174`, so the client always calls the same-origin `/api`, in dev and production.
 
 ## Scripts
 

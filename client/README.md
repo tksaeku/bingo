@@ -17,7 +17,7 @@ Run from the repo root with `-w client`, or from `client/`:
 
 ## Configuration
 
-`VITE_API_URL` is the API base URL, read from `.env.development` / `.env.production`. When unset (production builds), `src/services/api.ts` uses the same-origin `/api`, because the server serves the client.
+The client calls the same-origin `/api`: in dev the Vite server proxies it to the Express server on `:5174`, and in production the server serves the client. `VITE_API_URL` overrides the base URL and is normally unset.
 
 ## Structure
 
@@ -43,12 +43,15 @@ src/
 - `WinModal` - accessible dialog (focus trap, Escape, labelled input) that submits the player name with pending, error and retry states, then offers Play Again.
 - `Leaderboard` - top 20, refreshed every 30 seconds and on demand without blanking the table.
 - `OptionsManager` - add and delete options with in-page delete confirmation.
-- `AdminKeyForm` - collects the admin key; the key is stored only after the server accepts it.
+- `AdminUnlock` - the admin unlock screen: **Unlock with passkey**, with admin-key sign-in as the fallback (shown directly when the browser lacks WebAuthn).
+- `AddPasskeyOffer` - modal dialog shown after a key sign-in that offers to add a passkey for this device.
+- `PasskeyList` - the Passkeys section on `/passkeys`: list, add, and remove with in-page confirmation.
 
 ### Hooks
 
 - `useOptions`, `useLeaderboard` return `{ data, loading, error, refetch }`. Only the first load reports `loading`; in-flight requests are aborted on unmount.
-- `useAdminKey` holds the verified key in `sessionStorage` (shared across components) and exposes `verifyAndStore` and `clearAdminKey`.
+- `useAdminSession` holds the admin session status in an in-memory store shared by every instance (no browser storage), checks `GET /api/admin/verify` on first mount, and exposes `unlockWithPasskey`, `unlockWithKey`, `addPasskey`, `lock` and `markSessionEnded`.
+- `usePasskeys` lists and removes stored passkeys.
 - `useBingoBoard` restores a valid saved board or generates one, persists every mark, and opens the win modal once per board.
 - `useFocusTrap` traps focus in a container and handles Escape.
 
@@ -61,7 +64,7 @@ src/
 
 ### Admin access
 
-The "Manage Options" link renders only while a verified key is in `sessionStorage`. `/options` shows the key form until `GET /api/admin/verify` accepts the key. Option writes send the key in the `x-admin-key` header; a 401 clears the stored key and returns to the form.
+There are no nav links to the admin pages; admins visit `/cards`, `/stats` and `/passkeys` directly. All three show the unlock screen until `GET /api/admin/verify` succeeds. Unlocking sets an httpOnly session cookie, which authorizes every admin request; the client never holds the key or a token. A 401 returns to the unlock screen with "Your admin session ended. Unlock again." `/passkeys` holds the passkey list and the **Lock** button.
 
 ## Testing
 

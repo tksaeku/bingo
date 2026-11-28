@@ -1,4 +1,4 @@
-import type { AnalyticsBatchRecord, DailyAnalytics, DeviceType, LeaderboardEntry, Option, StoredAnalyticsEvent } from '../types';
+import type { AnalyticsBatchRecord, DailyAnalytics, DeviceType, LeaderboardEntry, Option, StoredAdminPasskey, StoredAnalyticsEvent } from '../types';
 
 /** Outcome of an atomic option insert. */
 export type CreateOptionResult =
@@ -60,4 +60,18 @@ export type AnalyticsRepository = {
   countVisitorsSince: (day: string) => Promise<number>;
   /** Lists raw batches whose day is within the inclusive range, oldest first. */
   listBatches: (fromDay: string, toDay: string) => Promise<AnalyticsBatchRecord[]>;
+};
+
+/** Persistence contract for admin passkeys. */
+export type AdminPasskeyRepository = {
+  /** Lists all passkeys, newest first. */
+  list: () => Promise<StoredAdminPasskey[]>;
+  /** Fetches one passkey by credential ID, or null when missing. */
+  get: (id: string) => Promise<StoredAdminPasskey | null>;
+  /** Stores a passkey; rejects when the credential ID already exists. */
+  create: (passkey: StoredAdminPasskey) => Promise<StoredAdminPasskey>;
+  /** Records a successful sign-in: new counter and last-used time. No-op when the passkey is missing. */
+  recordUse: (id: string, counter: number, usedAt: Date) => Promise<void>;
+  /** Deletes a passkey; resolves false when it does not exist. */
+  delete: (id: string) => Promise<boolean>;
 };

@@ -1,6 +1,16 @@
 import axios from 'axios';
-import { ADMIN_KEY_HEADER } from '../constants';
-import type { AnalyticsRangeDays, AnalyticsSummary, EventBatch, LeaderboardEntry, Option } from '../types';
+import type {
+  AdminPasskey,
+  AnalyticsRangeDays,
+  AnalyticsSummary,
+  AuthenticationResponseJSON,
+  EventBatch,
+  LeaderboardEntry,
+  Option,
+  PublicKeyCredentialCreationOptionsJSON,
+  PublicKeyCredentialRequestOptionsJSON,
+  RegistrationResponseJSON,
+} from '../types';
 
 /** API base URL from `VITE_API_URL`, when configured. */
 const configuredBaseUrl: string | undefined = import.meta.env.VITE_API_URL;
@@ -13,23 +23,18 @@ const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-/** Builds the request config that carries the admin key. */
-function getAdminConfig(adminKey: string): { headers: Record<string, string> } {
-  return { headers: { [ADMIN_KEY_HEADER]: adminKey } };
-}
-
-/** Option endpoints. Writes require the admin key. */
+/** Option endpoints. Writes require an admin session. */
 export const optionsApi = {
   getAll: async (signal?: AbortSignal): Promise<Option[]> => {
     const response = await apiClient.get<Option[]>('/options', { signal });
     return response.data;
   },
-  create: async (text: string, adminKey: string): Promise<Option> => {
-    const response = await apiClient.post<Option>('/options', { text }, getAdminConfig(adminKey));
+  create: async (text: string): Promise<Option> => {
+    const response = await apiClient.post<Option>('/options', { text });
     return response.data;
   },
-  delete: async (id: string, adminKey: string): Promise<void> => {
-    await apiClient.delete(`/options/${encodeURIComponent(id)}`, getAdminConfig(adminKey));
+  delete: async (id: string): Promise<void> => {
+    await apiClient.delete(`/options/${encodeURIComponent(id)}`);
   },
 };
 
@@ -45,10 +50,49 @@ export const leaderboardApi = {
   },
 };
 
-/** Admin endpoints. */
+/** Admin endpoints. The session cookie authorizes them. */
 export const adminApi = {
-  verify: async (adminKey: string, signal?: AbortSignal): Promise<void> => {
-    await apiClient.get('/admin/verify', { ...getAdminConfig(adminKey), signal });
+  verify: async (signal?: AbortSignal): Promise<void> => {
+    await apiClient.get('/admin/verify', { signal });
+  },
+};
+
+/** Sign-in and sign-out endpoints. */
+export const authApi = {
+  signInWithKey: async (adminKey: string): Promise<void> => {
+    await apiClient.post('/auth/session', { adminKey });
+  },
+  signOut: async (): Promise<void> => {
+    await apiClient.delete('/auth/session');
+  },
+  getPasskeyOptions: async (): Promise<PublicKeyCredentialRequestOptionsJSON> => {
+    const response =
+      await apiClient.post<PublicKeyCredentialRequestOptionsJSON>('/auth/passkey/options');
+    return response.data;
+  },
+  verifyPasskey: async (response: AuthenticationResponseJSON): Promise<void> => {
+    await apiClient.post('/auth/passkey/verify', { response });
+  },
+};
+
+/** Passkey management endpoints (admin session required). */
+export const passkeysApi = {
+  getRegistrationOptions: async (): Promise<PublicKeyCredentialCreationOptionsJSON> => {
+    const response = await apiClient.post<PublicKeyCredentialCreationOptionsJSON>(
+      '/admin/passkeys/registration-options'
+    );
+    return response.data;
+  },
+  register: async (response: RegistrationResponseJSON, name?: string): Promise<AdminPasskey> => {
+    const created = await apiClient.post<AdminPasskey>('/admin/passkeys', { response, name });
+    return created.data;
+  },
+  list: async (signal?: AbortSignal): Promise<AdminPasskey[]> => {
+    const response = await apiClient.get<AdminPasskey[]>('/admin/passkeys', { signal });
+    return response.data;
+  },
+  remove: async (id: string): Promise<void> => {
+    await apiClient.delete(`/admin/passkeys/${encodeURIComponent(id)}`);
   },
 };
 
@@ -70,9 +114,8 @@ export const analyticsApi = {
     });
     return response.status;
   },
-  getSummary: async (adminKey: string, days: AnalyticsRangeDays, signal?: AbortSignal): Promise<AnalyticsSummary> => {
+  getSummary: async (days: AnalyticsRangeDays, signal?: AbortSignal): Promise<AnalyticsSummary> => {
     const response = await apiClient.get<AnalyticsSummary>('/admin/analytics', {
-      ...getAdminConfig(adminKey),
       params: { days },
       signal,
     });

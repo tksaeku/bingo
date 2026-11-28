@@ -28,11 +28,14 @@ export const OPTION_TEXT_MAX_LENGTH = 100;
 /** localStorage key holding the in-progress board. */
 export const BOARD_STORAGE_KEY = 'bingoBoard';
 
-/** sessionStorage key holding the verified admin key. */
-export const ADMIN_KEY_STORAGE_KEY = 'bingoAdminKey';
+/** Shown when the passkey prompt is cancelled or times out. */
+export const PASSKEY_DISMISSED_MESSAGE = 'Passkey prompt was dismissed.';
 
-/** Request header carrying the admin key. */
-export const ADMIN_KEY_HEADER = 'x-admin-key';
+/** Shown when the server rejects a passkey sign-in. */
+export const PASSKEY_REJECTED_MESSAGE = "That passkey wasn't recognized.";
+
+/** Shown when an admin request returns 401 and the page returns to the unlock screen. */
+export const SESSION_ENDED_MESSAGE = 'Your admin session ended. Unlock again.';
 
 /** Number of confetti pieces rendered in the win modal. */
 export const CONFETTI_PIECE_COUNT = 50;

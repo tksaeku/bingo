@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { parseAnalyticsEnabled, parseCorsOrigins, parsePort, parseTrustedProxyHops } from './config';
-import { DEFAULT_CORS_ORIGINS } from './constants';
+import { parseAnalyticsEnabled, parseCorsOrigins, parsePort, parseTrustedProxyHops, parseWebAuthnOrigins, parseWebAuthnRpId } from './config';
+import { DEFAULT_CORS_ORIGINS, DEFAULT_WEBAUTHN_ORIGINS } from './constants';
 
 describe('config', () => {
   describe('parseCorsOrigins', () => {
@@ -45,5 +45,29 @@ describe('parseAnalyticsEnabled', () => {
 
   it.each([undefined, '', 'false', 'TRUE', '1', ' true'])('is false for %j', (value) => {
     expect(parseAnalyticsEnabled(value)).toBe(false);
+  });
+});
+
+describe('parseWebAuthnOrigins', () => {
+  it('splits on commas and trims whitespace', () => {
+    expect(parseWebAuthnOrigins(' https://a.example , https://b.example ')).toEqual(['https://a.example', 'https://b.example']);
+  });
+
+  it('drops empty entries', () => {
+    expect(parseWebAuthnOrigins('https://a.example,, ,')).toEqual(['https://a.example']);
+  });
+
+  it.each([undefined, '', '  ,  '])('falls back to the default origins for %j', (value) => {
+    expect(parseWebAuthnOrigins(value)).toEqual([...DEFAULT_WEBAUTHN_ORIGINS]);
+  });
+});
+
+describe('parseWebAuthnRpId', () => {
+  it('returns the trimmed value', () => {
+    expect(parseWebAuthnRpId(' bingo.wemove.dance ')).toBe('bingo.wemove.dance');
+  });
+
+  it.each([undefined, '', '   '])('defaults to localhost for %j', (value) => {
+    expect(parseWebAuthnRpId(value)).toBe('localhost');
   });
 });

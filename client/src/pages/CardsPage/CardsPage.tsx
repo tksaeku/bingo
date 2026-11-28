@@ -1,15 +1,27 @@
 import type { ReactElement } from 'react';
-import AdminKeyForm from '../../components/AdminKeyForm/AdminKeyForm';
+import AddPasskeyOffer from '../../components/AddPasskeyOffer/AddPasskeyOffer';
+import AdminUnlock from '../../components/AdminUnlock/AdminUnlock';
 import OptionsManager from '../../components/OptionsManager/OptionsManager';
-import { useAdminKey } from '../../hooks/useAdminKey';
+import { useAdminSession } from '../../hooks/useAdminSession';
+import { Card, CardLoading } from '../../styles/Card';
 import { Eyebrow, Hero, HeroLead, HeroTitle, HeroTitleAccent, Page } from '../../styles/PageHero';
 
-/** Shown on the key form after the server rejects the stored key. */
-const KEY_REJECTED_MESSAGE = 'Your admin key was rejected. Enter it again.';
-
-/** Admin page for the card deck: the admin-key form until a verified key is held, then the card editor. */
+/** Admin page for the card deck: the unlock screen until the session is unlocked, then the card editor. */
 const CardsPage = (): ReactElement => {
-  const { adminKey, isVerifying, error, verifyAndStore, clearAdminKey } = useAdminKey();
+  const {
+    status,
+    isBusy,
+    error,
+    justSignedInWithKey,
+    unlockWithPasskey,
+    unlockWithKey,
+    addPasskey,
+    dismissAddPasskeyOffer,
+    markSessionEnded,
+  } = useAdminSession();
+  const handleAddPasskey = async (name?: string): Promise<void> => {
+    await addPasskey(name);
+  };
 
   return (
     <Page>
@@ -20,15 +32,34 @@ const CardsPage = (): ReactElement => {
         </HeroTitle>
         <HeroLead>Every square on every board is drawn from this deck. Add the moments worth spotting.</HeroLead>
       </Hero>
-      {adminKey === null ? (
-        <AdminKeyForm
-          onVerify={verifyAndStore}
-          isVerifying={isVerifying}
+      {status === 'checking' && (
+        <Card>
+          <CardLoading role="status" aria-live="polite">
+            Checking admin session...
+          </CardLoading>
+        </Card>
+      )}
+      {status === 'locked' && (
+        <AdminUnlock
+          onUnlockWithPasskey={unlockWithPasskey}
+          onUnlockWithKey={unlockWithKey}
+          isBusy={isBusy}
           errorMessage={error}
-          description="Enter the admin key to manage the bingo cards."
+          description="Unlock to manage the bingo cards."
         />
-      ) : (
-        <OptionsManager adminKey={adminKey} onUnauthorized={() => clearAdminKey(KEY_REJECTED_MESSAGE)} />
+      )}
+      {status === 'unlocked' && (
+        <>
+          {justSignedInWithKey && (
+            <AddPasskeyOffer
+              onAdd={handleAddPasskey}
+              onDismiss={dismissAddPasskeyOffer}
+              isBusy={isBusy}
+              error={error}
+            />
+          )}
+          <OptionsManager onUnauthorized={markSessionEnded} />
+        </>
       )}
     </Page>
   );

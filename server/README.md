@@ -8,9 +8,9 @@ Express 5 + TypeScript API backed by Firestore. The API contract and server rule
 src/
   index.ts            entry point: loads env, listens on PORT
   app.ts              createApp() factory (CORS, body limit, rate limits, routers, client, 404, errors)
-  features/           options, leaderboard, admin, health: router assembler, one handler per endpoint, service, Zod schemas, tests
+  features/           options, leaderboard, admin, analytics, adminAuth: router assembler, one handler per endpoint, service, Zod schemas, tests
   repositories/       the only Firestore access: typed converters, transactions, collection constants
-  middleware/         requireAdminKey, error handler, validation helper, rate limiters, serveClient
+  middleware/         requireAdmin (session cookie or x-admin-key), error handler, validation helper, rate limiters, serveClient
   services/firestore.ts   Admin SDK init (Application Default Credentials)
   scripts/            seed and leaderboard migration
   testSupport/        in-memory repositories and test app builder

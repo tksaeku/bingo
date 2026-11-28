@@ -55,7 +55,7 @@ The **New Board** button doesn't get its own event; the `board_started` it cause
 ## `/stats` page
 
 - **Routing and nav (AC-A14):** add `<Route path="/stats" element={<StatsPage />} />`. There is no nav link; like `/cards`, admins visit the page directly.
-- **Gate:** `StatsPage` uses `useAdminKey`. With no key it renders `AdminKeyForm`; a `401` from the summary endpoint calls `clearAdminKey(KEY_REJECTED_MESSAGE)`, as in `OptionsPage`.
+- **Gate:** `StatsPage` uses `useAdminSession`. While locked it renders `AdminUnlock`; a `401` from the summary endpoint calls `markSessionEnded()`, as in `CardsPage`.
 - **Data (AC-A17):**
   - `useAnalyticsSummary(adminKey, days)` loads on mount and when `days` changes, and polls every 60 s.
   - Refetches keep the previous data on screen; only the first load shows a loading state.

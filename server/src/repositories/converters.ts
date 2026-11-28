@@ -1,6 +1,6 @@
 import { Timestamp, type DocumentData, type FirestoreDataConverter, type QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { ANALYTICS_DEVICE_TYPES } from '../constants';
-import type { AnalyticsBatchRecord, DeviceType, LeaderboardEntry, Option, StoredAnalyticsEvent } from '../types';
+import type { AnalyticsBatchRecord, DeviceType, LeaderboardEntry, Option, StoredAdminPasskey, StoredAnalyticsEvent } from '../types';
 
 /** Converts a stored Firestore value (Timestamp, Date, or ISO string) to an ISO string. */
 export function timestampToIso(value: unknown): string {
@@ -84,6 +84,32 @@ export const analyticsBatchConverter: FirestoreDataConverter<AnalyticsBatchRecor
         }),
       ),
       expireAt: timestampToIso(data.expireAt),
+    };
+  },
+};
+
+/** Maps admin passkey documents between Firestore (Timestamps, id from the snapshot) and the stored shape (ISO strings). */
+export const adminPasskeyConverter: FirestoreDataConverter<StoredAdminPasskey> = {
+  toFirestore(passkey: StoredAdminPasskey): DocumentData {
+    return {
+      publicKey: passkey.publicKey,
+      counter: passkey.counter,
+      transports: passkey.transports,
+      name: passkey.name,
+      createdAt: isoToTimestamp(passkey.createdAt),
+      lastUsedAt: passkey.lastUsedAt === null ? null : isoToTimestamp(passkey.lastUsedAt),
+    };
+  },
+  fromFirestore(snapshot: QueryDocumentSnapshot): StoredAdminPasskey {
+    const data = snapshot.data();
+    return {
+      id: snapshot.id,
+      publicKey: typeof data.publicKey === 'string' ? data.publicKey : '',
+      counter: typeof data.counter === 'number' ? data.counter : 0,
+      transports: Array.isArray(data.transports) ? data.transports.filter((transport): transport is string => typeof transport === 'string') : [],
+      name: typeof data.name === 'string' ? data.name : '',
+      createdAt: timestampToIso(data.createdAt),
+      lastUsedAt: data.lastUsedAt == null ? null : timestampToIso(data.lastUsedAt),
     };
   },
 };
